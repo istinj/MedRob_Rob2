@@ -1,12 +1,17 @@
 <Node name="root" gravity="0 -9.81 0" dt="0.02">
-	<!-- <VisualStyle displayFlags="showBehaviorModels showVisualModels showCollisionModels" /> -->
+	<!-- <VisualStyle displayFlags="showBehaviorModels showForceFields  showVisualModels showCollisionModels hideVisual" /> -->
 
-	<VisualStyle displayFlags="showForceFields hideVisual" />
+	<VisualStyle displayFlags="showCollisionModels" />
 
 	<DefaultPipeline name="DefaultCollisionPipeline" verbose="0" draw="0" depth="6" />
 	<BruteForceDetection name="Detection" />
 	<MinProximityIntersection name="Proximity" alarmDistance="0.5" contactDistance="0.05" />
 	<DefaultContactManager name="Response" response="default" />
+	<BruteForceDetection name="detection" />
+	<CollisionResponse name="response" response="FrictionContact" />
+	
+	<LocalMinDistance name="proximity" alarmDistance="0.3" contactDistance="0.15" angleCone="0.0" />
+	<FreeMotionAnimationLoop />
 	<LCPConstraintSolver tolerance="0.001" maxIt="1000"/>
 	<Node name="Tissue">
 		<EulerImplicitSolver name="Implicit Euler Solver" />
@@ -15,7 +20,7 @@
 		<RegularGridTopology name="grid" n="16 8 16" min="-10 -5 -10" max="10 5 10" />
 		<UniformMass template="Vec3d" name="Mass" />
 		<!-- <RegularGridSpringForceField template="Vec3d" name="Regular_FF" stiffness="100" damping="5" /> -->
-		<HexahedronFEMForceField template="Vec3d" name="FEM" poissonRatio="0.45" youngModulus="1400" />
+		<HexahedronFEMForceField template="Vec3d" name="FEM" poissonRatio="0.45" youngModulus="1200" />
 
 		<!-- Modify containers' names -->
 		<Node name="Quad Mesh">
@@ -40,9 +45,9 @@
 		<Node name="CollisionNode" >
 			<RegularGridTopology name="collision_node_top" n="16 8 16" min="-10 -5 -10" max="10 5 10" />
 			<MechanicalObject name="collision_node_MO" />
-			<PointModel name="collision_points" contactStiffness="500"  contactFriction="0.91"/>
-			<LineModel name="collision_lines" contactStiffness="500"  contactFriction="0.91"/>
-			<TTriangleModel template="Vec3d" name="collision_triangles" contactStiffness="500"  contactFriction="0.91"/>
+			<PointModel name="collision_points" contactStiffness="10"  contactFriction="0.51"/>
+			<LineModel name="collision_lines" contactStiffness="10"  contactFriction="0.51"/>
+			<TTriangleModel template="Vec3d" name="collision_triangles" contactStiffness="10"  contactFriction="0.51"/>
 			<BarycentricMapping  name="collision_node_BM" input="@../" output="@."  />
 		</Node>
 	</Node>
@@ -63,21 +68,21 @@
 		<CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
 		<!-- <MeshTopology fileTopology="misc/dental_instrument.obj" /> -->
 		<MechanicalObject name="instrumentState" template="Rigid" position="1.2 1.6 -3.55  0 0 0 1"  />
-		<UniformMass name="mass" totalmass="0.05" filename="BehaviorModels/dental_instrument.rigid" />
+		<UniformMass name="mass" totalmass="10.05" filename="BehaviorModels/dental_instrument.rigid" />
 		<LCPForceFeedback activate="true" forceCoef="0.005" />
 		<!-- ADDED : Compute a force-feedback for the device -->
 		<UncoupledConstraintCorrection />
 		<Node name="VisualModel">
-			<OglModel name="InstrumentVisualModel" fileMesh="misc/dental_instrument.obj" color="0.8 0.8 0.8 1.0" dz="-10" />
+			<OglModel name="InstrumentVisualModel" fileMesh="misc/dental_instrument.obj" color="0.8 0.8 0.8 1.0" scale3d="10 10 10" dz="-100" />
 			<RigidMapping name="MM-&gt;VM mapping" input="@../instrumentState" output="@InstrumentVisualModel" />
 		</Node>
 		<Node name="CollisionModel">
 			<MeshObjLoader filename="misc/dental_instrument_centerline.obj" name="loader" />
 			<Mesh src="@loader" name="InstrumentCollisionModel" />
-			<MechanicalObject src="@loader" name="instrumentCollisionState" translation="0 -2 -10" />
-			<Triangle name="instrument" contactStiffness="10" />
-			<Line name="instrument" contactStiffness="10" />
-			<Point name="instrument" contactStiffness="10" />
+			<MechanicalObject src="@loader" name="instrumentCollisionState" scale3d="10 10 10" translation="0 -20 -100" />
+			<Triangle name="instrument" contactStiffness="1"  contactFriction="0.51" />
+			<Line name="instrument" contactStiffness="1"  contactFriction="0.51" />
+			<Point name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<RigidMapping name="MM-&gt;CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
 		</Node>
 	</Node>
