@@ -33,32 +33,32 @@
 					<OglModel template="ExtVec3f" name="Visual" material="Default Diffuse 1 1 0 0 1 Ambient 1 0.2 0 0 1 Specular 0 1 0 0 1 Emissive 0 1 0 0 1 Shininess 0 45" />
 					<IdentityMapping template="Vec3d,ExtVec3f" name="default12" input="@.." output="@Visual" />
 				</Node>
-
-				<Node name="CollisionNode" >
-					<MeshTopology name="Mesh" fileTopology="misc/cube.obj" />
-					<MechanicalObject template="Vec3d" name="CollisionObject" scale3d="1 1 1" restScale="1" />
-					<PointModel name="Points" />
-					<LineModel name="Lines" />
-					<TTriangleModel template="Vec3d" name="Triangles" />
-					<BarycentricMapping  name="MechanicalMapping"  />
-				</Node>
 			</Node>
 		</Node>
-
-		<!-- Floor -->
-<!-- 		<Node name="Floor">
-			<PlaneForceField template="Vec3d" name="Plane" normal="0 1 0" d="-5.00001" draw="true" drawSize="40" />
-		</Node> -->
-
-		<!-- Floor -->
-		<Node name="Plane">
-			<MeshTopology name="Mesh"  fileTopology="misc/cube.obj" />
-			<MechanicalObject template="Vec3d" name="Floor"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  externalForce="0 0 0"  derivX="0 0 0"  restScale="1"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="40 0.2 40" />
-			<TTriangleModel template="Vec3d" name="Triangles"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.01" />
-			<TLineModel template="Vec3d" name="Lines"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.01" />
-			<TPointModel template="Vec3d" name="Points"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.01" />
-			<OglModel template="ExtVec3f" name="Visual"  fileMesh="misc/cube.obj"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="40 0.2 40"  material="Default Diffuse 1 0.5 0.5 0.5 1 Ambient 1 0.1 0.1 0.1 1 Specular 0 0.5 0.5 0.5 1 Emissive 0 0.5 0.5 0.5 1 Shininess 0 45 "  primitiveType="DEFAULT"  blendEquation="GL_FUNC_ADD"  sfactor="GL_SRC_ALPHA"  dfactor="GL_ONE_MINUS_SRC_ALPHA" />
+		<Node name="CollisionNode" >
+			<!-- <MeshTopology name="Mesh" fileTopology="misc/cube.obj" /> -->
+			<RegularGridTopology name="collision_node_top" n="16 8 16" min="-10 -5 -10" max="10 5 10" />
+			<MechanicalObject name="collision_node_MO" />
+			<PointModel name="Points" />
+			<LineModel name="Lines" />
+			<TTriangleModel template="Vec3d" name="Triangles" />
+			<BarycentricMapping  name="collision_node_BM" input="@../" output="@."  />
 		</Node>
+	</Node>
 
+
+	<!-- Floor -->
+	<!-- 		<Node name="Floor">
+		<PlaneForceField template="Vec3d" name="Plane" normal="0 1 0" d="-5.00001" draw="true" drawSize="40" />
+	</Node> -->
+
+	<!-- Floor -->
+	<Node name="Plane">
+		<MeshTopology name="Mesh"  fileTopology="misc/cube.obj" />
+		<MechanicalObject template="Vec3d" name="Floor"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  externalForce="0 0 0"  derivX="0 0 0"  restScale="1"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="40 0.2 40" />
+		<TTriangleModel template="Vec3d" name="Triangles"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.01" />
+		<TLineModel template="Vec3d" name="Lines"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.01" />
+		<TPointModel template="Vec3d" name="Points"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.01" />
+		<OglModel template="ExtVec3f" name="Visual"  fileMesh="misc/cube.obj"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="40 0.2 40"  material="Default Diffuse 1 0.5 0.5 0.5 1 Ambient 1 0.1 0.1 0.1 1 Specular 0 0.5 0.5 0.5 1 Emissive 0 0.5 0.5 0.5 1 Shininess 0 45 "  primitiveType="DEFAULT"  blendEquation="GL_FUNC_ADD"  sfactor="GL_SRC_ALPHA"  dfactor="GL_ONE_MINUS_SRC_ALPHA" />
 	</Node>
 </Node>
