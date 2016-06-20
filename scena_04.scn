@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 <Node name="root" gravity="0 -9.81 0" dt="0.02">
 	<!-- <VisualStyle displayFlags="showBehaviorModels showForceFields  showVisualModels showCollisionModels hideVisual" /> -->
+	<RequiredPlugin pluginName="SofaPython"/>
 
 	<VisualStyle displayFlags="showCollisionModels" />
 
@@ -65,29 +66,48 @@
 		<OglModel template="ExtVec3f" name="Visual"  fileMesh="misc/cube.obj"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="130 0.2 130"  material="Default Diffuse 1 0.5 0.5 0.5 1 Ambient 1 0.1 0.1 0.1 1 Specular 0 0.5 0.5 0.5 1 Emissive 0 0.5 0.5 0.5 1 Shininess 0 45 "  primitiveType="DEFAULT"  blendEquation="GL_FUNC_ADD"  sfactor="GL_SRC_ALPHA"  dfactor="GL_ONE_MINUS_SRC_ALPHA" />
 	</Node>
 
+
+
 	<!-- Needle -->
+	<Node name="InstrControl">
+        <MechanicalObject template="Rigid" name="DOFs" position="0 0 0  0 0 0 1" />
+        <PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
+
+        <Node name="RefModel">
+            <MeshObjLoader filename="misc/needle_model/needleLine.obj"  name="loader" />
+            <Mesh src="@loader" />
+            <MechanicalObject src="@loader" name="instrumentCollisionState" rz="0" dx="0"/>
+            <RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
+        </Node> 
+    </Node>
+
+
+
 	<Node name="Instrument">
 		<EulerImplicitSolver name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
 		<CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
 		<!-- <MeshTopology fileTopology="misc/dental_instrument.obj" /> -->
-		<MechanicalObject name="instrumentState" template="Rigid" position="1.2 1.6 -3.55  0 0 0 1"  />
-		<UniformMass name="mass" totalmass="10.05" filename="BehaviorModels/dental_instrument.rigid" />
+		<MechanicalObject name="instrumentState" template="Rigid" position="0 0 0 0 0 0 1"  />
+		<UniformMass name="mass" totalmass="1"  />
 		<LCPForceFeedback activate="true" forceCoef="0.005" />
 		<!-- ADDED : Compute a force-feedback for the device -->
 		<UncoupledConstraintCorrection />
 		<Node name="VisualModel">
-			<OglModel name="InstrumentVisualModel" fileMesh="misc/dental_instrument.obj" color="0.8 0.8 0.8 1.0" scale3d="10 10 10" dz="-100" />
+			<OglModel name="InstrumentVisualModel" fileMesh="misc/needle_model/needleVisual.obj" color="0.8 0.8 0.8 1.0" scale3d="1 1 1" translation="0 0 0" />
 			<RigidMapping name="MM-&gt;VM mapping" input="@../instrumentState" output="@InstrumentVisualModel" />
 		</Node>
 		<Node name="CollisionModel">
-			<MeshObjLoader filename="misc/dental_instrument_centerline.obj" name="loader" />
+			<MeshObjLoader filename="misc/needle_model/needleLine.obj" name="loader" />
 			<Mesh src="@loader" name="InstrumentCollisionModel" />
-			<MechanicalObject src="@loader" name="instrumentCollisionState" scale3d="10 10 10" translation="0 -20 -100" />
+			<MechanicalObject src="@loader" name="instrumentCollisionState" scale3d="1 1 1" translation="0 0 0" />
 			<Triangle name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<Line name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<Point name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<RigidMapping name="MM-&gt;CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
 		</Node>
+
+		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@Instrument/CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
+		
 	</Node>
 
 
