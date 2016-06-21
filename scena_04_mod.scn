@@ -17,16 +17,16 @@
 	<FreeMotionAnimationLoop />
 
 	<LCPConstraintSolver tolerance="0.001" maxIt="1000"/>
+<!--
 	<Node name="Tissue">
 		<EulerImplicitSolver name="Implicit Euler Solver" />
 		<CGLinearSolver template="GraphScattered" name="Conjugate Gradient" iterations="25" tolerance="1e-5" threshold="1e-5"/>
 		<MechanicalObject template="Vec3d" name="Hexa" />
 		<RegularGridTopology name="grid" n="16 8 16" min="-10 -5 -10" max="10 5 10" />
 		<UniformMass template="Vec3d" name="Mass" mass="0.25"/>
-		<!-- <RegularGridSpringForceField template="Vec3d" name="Regular_FF" stiffness="100" damping="5" /> -->
-		<HexahedronFEMForceField template="Vec3d" name="FEM" poissonRatio="0.45" youngModulus="5000" />
 
-		<!-- Modify containers' names -->
+		<HexahedronFEMForceField template="Vec3d" name="FEM" poissonRatio="0.45" youngModulus="5000" />
+		
 		<Node name="Quad Mesh">
 			<TetrahedronSetTopologyContainer name="Container" />
 			<TetrahedronSetTopologyModifier name="Modifier" />
@@ -39,7 +39,7 @@
 				<TriangleSetTopologyAlgorithms template="Vec3d" name="TopoAlgo" />
 				<TriangleSetGeometryAlgorithms template="Vec3d" name="GeomAlgo" />
 				<Tetra2TriangleTopologicalMapping name="default8" input="@../Container" output="@Container" />
-				<!-- <TriangleModel name="default9" /> -->
+				
 				<Node name="Visu">
 					<OglModel template="ExtVec3f" name="Visual" material="Default Diffuse 1 1 0 0 1 Ambient 1 0.2 0 0 1 Specular 0 1 0 0 1 Emissive 0 1 0 0 1 Shininess 0 45" />
 					<IdentityMapping template="Vec3d,ExtVec3f" name="default12" input="@.." output="@Visual" />
@@ -55,8 +55,10 @@
 			<BarycentricMapping  name="collision_node_BM" input="@../" output="@."  />
 		</Node>
 	</Node>
+-->
 
 	<!-- Floor -->
+<!--
 	<Node name="Plane">
 		<MeshTopology name="Mesh"  fileTopology="misc/cube.obj" />
 		<MechanicalObject template="Vec3d" name="Floor"  position="0 0 0"  velocity="0 0 0"  force="0 0 0"  externalForce="0 0 0"  derivX="0 0 0"  restScale="1"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="130 0.2 130"  />
@@ -65,48 +67,44 @@
 		<TPointModel template="Vec3d" name="Points"  moving="0"  simulated="0"  contactStiffness="500"  contactFriction="0.91" />
 		<OglModel template="ExtVec3f" name="Visual"  fileMesh="misc/cube.obj"  translation="0 -5.10001 0"  rotation="0 0 0"  scale3d="130 0.2 130"  material="Default Diffuse 1 0.5 0.5 0.5 1 Ambient 1 0.1 0.1 0.1 1 Specular 0 0.5 0.5 0.5 1 Emissive 0 0.5 0.5 0.5 1 Shininess 0 45 "  primitiveType="DEFAULT"  blendEquation="GL_FUNC_ADD"  sfactor="GL_SRC_ALPHA"  dfactor="GL_ONE_MINUS_SRC_ALPHA" />
 	</Node>
-
-
+-->
 
 	<!-- Needle -->
-	<Node name="InstrControl">
-        <MechanicalObject template="Rigid" name="DOFs" position="0 0 0  0 0 0 1" />
-        <PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
-
-        <Node name="RefModel">
-            <MeshObjLoader filename="misc/needle_model/needleLine.obj"  name="loader" />
-            <Mesh src="@loader" />
-            <MechanicalObject src="@loader" name="instrumentCollisionState" rz="0" dx="0"/>
-            <RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
-        </Node> 
-    </Node>
-
-
-
 	<Node name="Instrument">
 		<EulerImplicitSolver name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
 		<CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
 		<!-- <MeshTopology fileTopology="misc/dental_instrument.obj" /> -->
 		<MechanicalObject name="instrumentState" template="Rigid" position="0 0 0 0 0 0 1"  />
-		<UniformMass name="mass" totalmass="1"  />
+		<UniformMass name="mass" totalMass="1" />
 		<LCPForceFeedback activate="true" forceCoef="0.005" />
 		<!-- ADDED : Compute a force-feedback for the device -->
+		<MeshObjLoader filename="misc/needle_model/needleLine.obj" name="loader" translation="0 10 0"/>
+		<Mesh src="@loader" name="Needle_mesh" />
 		<UncoupledConstraintCorrection />
 		<Node name="VisualModel">
-			<OglModel name="InstrumentVisualModel" fileMesh="misc/needle_model/needleVisual.obj" color="0.8 0.8 0.8 1.0" scale3d="10 10 10" dz="-100"  />
+			<OglModel name="InstrumentVisualModel" fileMesh="misc/needle_model/needleVisual.obj" color="0.8 0.8 0.8 1.0" translation="0 10 0"/>
 			<RigidMapping name="MM-&gt;VM mapping" input="@../instrumentState" output="@InstrumentVisualModel" />
 		</Node>
 		<Node name="CollisionModel">
-			<MeshObjLoader filename="misc/needle_model/needleLine.obj" name="loader" />
-			<Mesh src="@loader" name="InstrumentCollisionModel" />
-			<MechanicalObject src="@loader" name="instrumentCollisionState" scale3d="10 10 10" translation="0 -20 -100" />
+			<MechanicalObject src="@../loader" name="instrumentCollisionState"/>
 			<Triangle name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<Line name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<Point name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<RigidMapping name="MM-&gt;CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
 		</Node>
 
-		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@Instrument/CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
+		<!-- Needle controller -->
+		<Node name="InstrControl">
+			<MechanicalObject template="Rigid" name="DOFs" position="0 0 0  0 0 0 1" />
+			<PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
+
+			<Node name="RefModel">
+				<MechanicalObject src="@../../loader" name="instrumentCollisionState"/>
+				<RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
+			</Node> 
+		</Node>
+
+		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
 		
 	</Node>
 
