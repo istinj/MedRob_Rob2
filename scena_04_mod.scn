@@ -69,12 +69,23 @@
 	</Node>
 -->
 
+	<!-- Needle controller -->
+	<Node name="InstrControl">
+		<MechanicalObject template="Rigid" name="DOFs" position="0 0 0  0 0 0 1" />
+		<PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
+
+		<Node name="RefModel">
+			<MechanicalObject src="@../../loader" name="instrumentCollisionState"/>
+			<RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
+		</Node> 
+	</Node>
+	
 	<!-- Needle -->
 	<Node name="Instrument">
 		<EulerImplicitSolver name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
 		<CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
 		<!-- <MeshTopology fileTopology="misc/dental_instrument.obj" /> -->
-		<MechanicalObject name="instrumentState" template="Rigid" position="0 0 0 0 0 0 1"  />
+		<MechanicalObject name="instrumentState" template="Rigid" position="0 0 0 0 0 0 1" dz="10" />
 		<UniformMass name="mass" totalMass="1" />
 		<LCPForceFeedback activate="true" forceCoef="0.005" />
 		<!-- ADDED : Compute a force-feedback for the device -->
@@ -91,17 +102,6 @@
 			<Line name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<Point name="instrument" contactStiffness="1"  contactFriction="0.51" />
 			<RigidMapping name="MM-&gt;CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
-		</Node>
-
-		<!-- Needle controller -->
-		<Node name="InstrControl">
-			<MechanicalObject template="Rigid" name="DOFs" position="0 0 0  0 0 0 1" />
-			<PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
-
-			<Node name="RefModel">
-				<MechanicalObject src="@../../loader" name="instrumentCollisionState"/>
-				<RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
-			</Node> 
 		</Node>
 
 		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
