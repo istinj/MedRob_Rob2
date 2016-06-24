@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<Node name="root" gravity="0 -700 0" dt="0.02">
+	<!-- A soft gelatin object contains 2 bead, one stiff and one soft. Even using large embedding mesh, the
+	HexahedronCompositeFEM permits to well simulate the global behavior, and the HexahedronCompositeFEMMapping
+	permits to have a good interpolation of the inside bead behaviors.-->
+	<RequiredPlugin pluginName="SofaPython"/>
+	<FreeMotionAnimationLoop />
+
+	<VisualStyle displayFlags="showVisual showForceFields" />
+	<LCPConstraintSolver tolerance="0.001" maxIt="1000"/>
+	<Node name="plane">
+		<OglModel name="plan" fileMesh="mesh/plane_loop_2.obj" rx="90" rz="90" scale=".2" dy="-2.01" material="Default Diffuse 1 1 0.4 0.4 1 Ambient 1 0.8 0.8 0.8 1 Specular 0 1 1 1 1 Emissive 0 1 1 1 1 Shininess 0 45" />
+	</Node>
+	<CollisionPipeline depth="6" verbose="0" draw="0" />
+	<BruteForceDetection name="N2" />
+	<MinProximityIntersection name="Proximity" alarmDistance="0.5" contactDistance="0.3" />
+	<CollisionResponse name="Response" response="default" />
+
+
+
+	
+	<CollisionGroup name="Group" />
+	<Node name="Composite elements with 3 differents material stiffnesses">
+		<SparseGridMultipleTopology n="6 3 3" fileTopology="mesh/bubille_out.obj" fileTopologies="mesh/bubille_out.obj mesh/bubille_in1.obj mesh/bubille_in2.obj" nbVirtualFinerLevels="3" finestConnectivity="false" stiffnessCoefs="1 0.0001 50" massCoefs="1 1 1" />
+		<EulerImplicit vdamping="0" rayleighMass="0" rayleighStiffness="0" />
+		<CGLinearSolver iterations="100" tolerance="1e-5" threshold="1e-5"/>
+		<MechanicalObject />
+		<HexahedronCompositeFEMForceFieldAndMass drawType="0" lumpedMass="false" nbVirtualFinerLevels="2" youngModulus="600" poissonRatio="0.3" method="polar" density=".1" updateStiffnessMatrix="false" printLog="0" />
+		<BoxConstraint box="-5 -2.1 -10    10 -1.9 10" />
+		<Node name="Collinonunif">
+			<MeshObjLoader name="loader" filename="mesh/bubille_out.obj" />
+			<Mesh src="@loader" />
+			<MechanicalObject src="@loader" />
+			<HexahedronCompositeFEMMapping />
+			<Triangle />
+			<Node name="Soft gelatin">
+				<OglModel name="VisualBody" fileMesh="mesh/bubille_out.obj" normals="0" color="0.1 .8 .3 .6" />
+				<IdentityMapping input="@.." output="@VisualBody" />
+			</Node>
+		</Node>
+		<Node name="soft bead">
+			<OglModel name="VisualBody1" fileMesh="mesh/bubille_in1.obj" normals="0" color="1 0 0 1" />
+			<HexahedronCompositeFEMMapping input="@.." output="@VisualBody1" />
+		</Node>
+		<Node name="stiff bead">
+			<OglModel name="VisualBody2" fileMesh="mesh/bubille_in2.obj" normals="0" color="0 0 1 1" />
+			<HexahedronCompositeFEMMapping input="@.." output="@VisualBody2" />
+		</Node>
+	</Node>
+
+
+
+
+
+
+
+
+
+
+
+
+	<!-- Needle -->
+	<Node name="InstrControl">
+        <MechanicalObject template="Rigid" name="DOFs" position="0 0 -30  0 0 0 1" />
+        <PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
+
+        <Node name="RefModel">
+            <MeshObjLoader filename="misc/needle_model/needleLine.obj"  name="loader" />
+            <Mesh src="@loader" />
+            <MechanicalObject src="@loader" name="instrumentCollisionState" rz="0" dx="0"/>
+            <RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
+        </Node> 
+    </Node>
+
+
+
+	<Node name="Instrument">
+		<EulerImplicitSolver name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
+		<CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
+		<MechanicalObject name="instrumentState" template="Rigid" position="0 0 -30 0 0 0 1" />
+		<UniformMass name="mass" totalmass="0.05" showGravityCenter="true" />
+
+		<UncoupledConstraintCorrection />
+		<Node name="VisualModel">
+			<OglModel name="InstrumentVisualModel" fileMesh="misc/needle_model/needleVisual.obj" color="0.8 0.8 0.8 1.0" scale3d="10 10 10" />
+			<RigidMapping name="MM-VM mapping" input="@../instrumentState" output="@InstrumentVisualModel" />
+		</Node>
+		<Node name="CollisionModel">
+			<MeshObjLoader filename="misc/needle_model/needleLine.obj" name="loader" />
+			<Mesh src="@loader" name="InstrumentCollisionModel" />
+			<MechanicalObject src="@loader" name="instrumentCollisionState" scale3d="10 10 10" />
+			<Line name="instrument" contactStiffness="10"  contactFriction="0.51" />
+			<Point name="instrument" contactStiffness="10"  contactFriction="0.51" />
+			<RigidMapping name="MM-CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
+		</Node>
+
+		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@Instrument/CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
+		
+	</Node>
+
+
+
+
+
+
+</Node>

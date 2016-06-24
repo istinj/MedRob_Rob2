@@ -4,82 +4,90 @@ An assemblage of all the previous steps altogether
 -->
 <Node name="root" dt="0.05">
 
-    <RequiredPlugin pluginName="SofaPython"/>
+	<RequiredPlugin pluginName="SofaPython"/>
 
-    <BackgroundSetting color="0.5 0.5 0.5" />
-    <VisualStyle displayFlags="showVisualModels hideForceFields" /> 
+	<VisualStyle displayFlags="showVisualModels hideForceFields" /> 
 
-    <CollisionPipeline name="pipeline" depth="6" verbose="0" />
-    <BruteForceDetection name="detection" />
-    <CollisionResponse name="response" response="FrictionContact" />
-    <LocalMinDistance name="proximity" alarmDistance="0.15" contactDistance="0.05" />
+	<CollisionPipeline name="pipeline" depth="6" verbose="0" />
+	<BruteForceDetection name="detection" />
+	<CollisionResponse name="response" response="FrictionContact" />
+	<LocalMinDistance name="proximity" alarmDistance="0.15" contactDistance="0.05" />
 
-    <FreeMotionAnimationLoop />
-    <LCPConstraintSolver tolerance="0.001" maxIt="1000"/>
+	<FreeMotionAnimationLoop />
+	<LCPConstraintSolver tolerance="0.001" maxIt="1000"/>
 
-    <Node name="Tongue" activated="true">
-        <EulerImplicit name="odesolver" vdamping="4.0"/>
-        <CGLinearSolver iterations="10" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
-        <MeshVTKLoader name="volTongue" filename="misc/volumetricTongue.vtu" />
-        <TetrahedronSetTopologyContainer name="volume" src="@volTongue" />
-        <TetrahedronSetGeometryAlgorithms />
-        <MechanicalObject name="mecaTongue" />
-        <DiagonalMass massDensity="1" name="computed using mass density" />
-        <TetrahedralCorotationalFEMForceField name="FEM" youngModulus="1000" poissonRatio="0.45" method="large" />
-        <!-- <PrecomputedConstraintCorrection recompute="true"/> -->
-    
-        <BoxROI name="ROI" box="-1 1 -1 1 2 1" drawBoxes="1"/>
-        <FixedConstraint template="Vec3d" indices="@ROI.indices"/>   
+	<Node name="Tongue" activated="true">
+		<EulerImplicit name="odesolver" vdamping="4.0"/>
+		<CGLinearSolver iterations="10" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" />
+		<MeshVTKLoader name="volTongue" filename="misc/volumetricTongue.vtu" />
+		<TetrahedronSetTopologyContainer name="volume" src="@volTongue" />
+		<TetrahedronSetGeometryAlgorithms />
+		<MechanicalObject name="mecaTongue" />
+		<DiagonalMass massDensity="1" name="computed using mass density" />
+		<TetrahedralCorotationalFEMForceField name="FEM" youngModulus="1000" poissonRatio="0.45" method="large" />
+		<!-- <PrecomputedConstraintCorrection recompute="true"/> -->
 
-        <Node name="TongueVisualModel">
-            <OglModel name="TongueVisualModel" fileMesh="misc/tongue.obj" />
-            <BarycentricMapping name="tongueMapping" input="@../mecaTongue" output="@TongueVisualModel" />
-        </Node>
-        <Node name="TongueCollisionModel">
-            <TriangleSetTopologyContainer name="TriContainer" />
-            <TriangleSetTopologyModifier name="Modifier" />
-            <TriangleSetTopologyAlgorithms name="TopoAlgo" />
-            <TriangleSetGeometryAlgorithms name="GeomAlgo" />
-            <Tetra2TriangleTopologicalMapping name="mapping" input="@../volume" output="@TriContainer" flipNormals="true" />
-            <MechanicalObject name="colTongue" />
-            <Triangle name="tongue" contactStiffness="5" />
-            <Line name="tongue" contactStiffness="5" />
-            <Point name="tongue" contactStiffness="5" />
-            <IdentityMapping name="identityMappingToCollision" input="@../mecaTongue" output="@colTongue" isMechanical="false" />
-        </Node>
-    </Node>
-    <Node name="InstrControl">
-        <MechanicalObject template="Rigid" name="DOFs" position="0.05 0.5 -7.65  0 0 0 1" />
+		<BoxROI name="ROI" box="-1 1 -1 1 2 1" drawBoxes="1"/>
+		<FixedConstraint template="Vec3d" indices="@ROI.indices"/>   
+
+		<Node name="TongueVisualModel">
+			<OglModel name="TongueVisualModel" fileMesh="misc/tongue.obj" />
+			<BarycentricMapping name="tongueMapping" input="@../mecaTongue" output="@TongueVisualModel" />
+		</Node>
+		<Node name="TongueCollisionModel">
+			<TriangleSetTopologyContainer name="TriContainer" />
+			<TriangleSetTopologyModifier name="Modifier" />
+			<TriangleSetTopologyAlgorithms name="TopoAlgo" />
+			<TriangleSetGeometryAlgorithms name="GeomAlgo" />
+			<Tetra2TriangleTopologicalMapping name="mapping" input="@../volume" output="@TriContainer" flipNormals="true" />
+			<MechanicalObject name="colTongue" />
+			<Triangle name="tongue" contactStiffness="5" />
+			<Line name="tongue" contactStiffness="5" />
+			<Point name="tongue" contactStiffness="5" />
+			<IdentityMapping name="identityMappingToCollision" input="@../mecaTongue" output="@colTongue" isMechanical="false" />
+		</Node>
+	</Node>
+
+		<!-- Needle -->
+	<Node name="InstrControl">
+        <MechanicalObject template="Rigid" name="DOFs" position="0 0 -30  0 0 0 1" />
         <PythonScriptController filename="keyboardControl.py" classname="KeyboardControl"/>
 
         <Node name="RefModel">
-            <MeshObjLoader filename="misc/dental_instrument_centerline.obj" name="loader" />
+            <MeshObjLoader filename="misc/needle_model/needleLine.obj"  name="loader" />
             <Mesh src="@loader" />
-            <MechanicalObject src="@loader" name="instrumentCollisionState" rz="90" dx="2"/>
+            <MechanicalObject src="@loader" name="instrumentCollisionState" rz="0" dx="0"/>
             <RigidMapping input="@../DOFs" output="@instrumentCollisionState"/>
         </Node> 
     </Node>
-    <Node name="Instrument">
-        <EulerImplicitSolver name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
-        <CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
-        <MechanicalObject name="instrumentState" template="Rigid" position="0.05 0.5 -7.65  0 0 0 1" />
-        <UniformMass name="mass" totalmass="0.05" filename="BehaviorModels/dental_instrument.rigid" />
-        <UncoupledConstraintCorrection />
-        <Node name="VisualModel">
-            <OglModel name="InstrumentVisualModel" fileMesh="misc/dental_instrument.obj" color="0.8 0.8 0.8 1.0" />
-            <RigidMapping name="MM-VM mapping" input="@../instrumentState" output="@InstrumentVisualModel" />
-        </Node>
-        <Node name="CollisionModel">
-            <MeshObjLoader filename="misc/dental_instrument_centerline.obj" name="loader" />
-            <Mesh src="@loader" name="InstrumentCollisionModel" />
-            <MechanicalObject src="@loader" name="instrumentCollisionState" translation="0 -2 0" />
-            <Line name="instrument" contactStiffness="10" />
-            <Point name="instrument" contactStiffness="10" />
-            <RigidMapping name="MM-CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
-        </Node>
+	
+	<Node name="Instrument">
+		<EulerImplicitSolver name="ODE solver" rayleighStiffness="0.01" rayleighMass="1.0" />
+		<CGLinearSolver name="linear solver" iterations="25" tolerance="1e-10" threshold="10e-10" />
+		<!-- <MeshTopology fileTopology="misc/dental_instrument.obj" /> -->
+		<MechanicalObject name="instrumentState" template="Rigid" position="0 0 -30 0 0 0 1" />
+		<UniformMass name="mass" totalmass="0.05" showGravityCenter="true" />
 
-    <VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@Instrument/CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
+		<UncoupledConstraintCorrection />
+		<Node name="VisualModel">
+			<OglModel name="InstrumentVisualModel" fileMesh="misc/needle_model/needleVisual.obj" color="0.8 0.8 0.8 1.0" scale3d="10 10 10" />
+			<RigidMapping name="MM-VM mapping" input="@../instrumentState" output="@InstrumentVisualModel" />
+		</Node>
+		<Node name="CollisionModel">
+			<MeshObjLoader filename="misc/needle_model/needleLine.obj" name="loader" />
+			<Mesh src="@loader" name="InstrumentCollisionModel" />
+			<MechanicalObject src="@loader" name="instrumentCollisionState" scale3d="10 10 10" />
+			<Line name="instrument" contactStiffness="10"  contactFriction="0.51" />
+			<Point name="instrument" contactStiffness="10"  contactFriction="0.51" />
+			<RigidMapping name="MM-CM mapping" input="@../instrumentState" output="@instrumentCollisionState" />
+		</Node>
 
-    </Node>
+		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@Instrument/CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
+		
+	</Node>
+
+		<VectorSpringForceField object1="@InstrControl/RefModel/instrumentCollisionState" object2="@Instrument/CollisionModel/instrumentCollisionState" stiffness="1000" viscosity="0" />
+
+	</Node>
 
 </Node>
