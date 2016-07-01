@@ -65,6 +65,16 @@ HLuint contact_point_id;
 // Booalean flag set to true if the surface is touched
 bool is_touched = false;
 
+// Other stuff
+static GLuint gCursorDisplayList = 0;
+HDdouble needle_DOP;
+HLfloat cursorToToolTranslation = 0.25; //! ??
+
+hduVector3Dd proxy_normal(0.0,0.0,0.0);
+hduVector3Dd proxy_position(0.0,0.0,0.0);
+static hduVector3Dd surface_cp(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
+											//! Rest-values may be wrong
+
 
 
 // *************************************************** //
@@ -80,11 +90,20 @@ void initNeedle();
 
 // Graphical callbacks
 void glutDisplayCB(void);
+void glutReshape(int width, int height);
+void glutIdle();
+void glutMenu(int entry_ID);
+void glutMouse(int button, int state, int x, int y);
+void glutMouseMotion(int x, int y);
 
 // Support functions
 void drawSceneGraphics();
 void drawSceneHaptics();
 void drawCursor();
+void updateWorkspace();
+void displayInfo();
+void exitHandler();
+void handleKeyboard(unsigned char key, int x, int y);
 
 // Declaring callbacks' 
 void HLCALLBACK hlTouchCubeCB(HLenum event,
@@ -118,9 +137,20 @@ int main(int argc, char const *argv[])
 	glutCreateWindow("Needle Insertion");
 
 	glutDisplayFunc(glutDisplay);
+	glutReshapeFunc(glutReshape);
+	glutIdleFunc(glutIdle);
+	glutCreateMenu(glutMenu);
 
-	printf("Initializing scene and OpenGL\n");
+	glutAddMenuEntry("Quit", 0);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+	glutKeyboardFunc(handleKeyboard);
+
+	//! ADD MOUSE MOVEMENT glutMouseFunc + motion
+
+	atexit(exitHandler);
 	initScene();
+	glutMainLoop();
+
 	return 0;
 }
 
@@ -160,6 +190,11 @@ void initHL()
 	// Enable optimization of the viewing parameters when rendering
 	// geometry for OpenHaptics.
 	hlEnable(HL_HAPTIC_CAMERA_VIEW);
+
+	// Generate id for the shape.
+	cube_id = hlGenShapes(1);
+	contact_point_id = hlGenShapes(1);
+	hlTouchableFace(HL_FRONT);
 
 	//! TO DO: Generate shape ID, add callbacks (hlAddEventCallBack)
 	hlAddEventCallBack(HL_EVENT_TOUCH, 
@@ -276,6 +311,7 @@ void initNeedle()
 	glEndList();
 }
 
+// *************************************
 // Haptic callbacks
 void HLCALLBACK hlTouchCubeCB(HLenum event,
 		HLuint object, 
@@ -285,6 +321,12 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 {
 	//! Placeholder
 	is_touched = true;
+
+	if (!is_touched)
+	{
+		hlGetDoublev(HL_PROXY_POSITION, surface_cp);
+		is_touched = true;
+	}
 	cout << "Touching the surface!" << endl;
 }
 
@@ -298,6 +340,9 @@ void HLCALLBACK hlUntouchCubeCB(HLenum event,
 	//! actually exiting
 	is_touched = false;
 	cout << "Now outiside"
+	// Reset the surface_cp to 0.0
+	surface_cp[0] = 0.0; surface_cp[1] = 0.0; surface_cp[2] = 0.0;
+
 }
 
 
@@ -335,6 +380,8 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 	return HD_CALLBACK_CONTINUE;
 }
 
+
+// *************************************
 // Graphical callbacks
 void glutDisplayCB(void)
 {
@@ -345,7 +392,125 @@ void glutDisplayCB(void)
 	glutSwapBuffer();
 }
 
+void glutReshape(int width, int height)
+{
+	static const double kPI = 3.1415926535897932384626433832795;
+	static const double kFovY = 40;
+	double nearDist, farDist, aspect;
 
+	glViewport(0, 0, width, height);
+
+	// Compute the viewing parameters based on a fixed fov and viewing
+	// a canonical box centered at the origin.
+
+	nearDist = 1.0 / tan((kFovY / 2.0) * kPI / 180.0);
+	farDist = nearDist + 2.0;
+	aspect = (double) width / height;
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45, aspect, 0.1, farDist);
+
+	// Place the camera down the Z axis looking at the origin.
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	gluLookAt(	0, 0, -1.0+farDist,
+				0, 0, 0,
+				0, 1, 0);
+
+	updateWorkspace();
+}
+
+void glutIdle()
+{
+	HLerror error;
+
+	while (HL_ERROR(error = hlGetError()))
+	{
+		fprintf(stderr, "HL Error: %s\n", error.errorCode);
+
+		if (error.errorCode == HL_DEVICE_ERROR)
+		{
+			hduPrintError(stderr, &error.errorInfo,
+				"Error during haptic rendering\n");
+		}
+	}
+
+	char title[40];
+	sprintf(title, "Haptic Displacement Mapping %4.1f fps", DetermineFPS());
+
+	glutSetWindowTitle(title);
+	glutPostRedisplay();
+}
+
+void glutMenu(int ID)
+{
+	switch(ID)
+	{
+		case 0:
+			exit(0);
+			break;
+	}
+}
+
+void glutMouse(int button,int state,int x,int y)
+{
+	if (state == GLUT_UP)
+		switch (button)
+		{
+			case GLUT_LEFT_BUTTON:
+				mouse_left_butt_active = false;
+				break;
+
+			case GLUT_RIGHT_BUTTON:
+				mouse_right_butt_active = false;
+				break;
+		}
+
+	if (state == GLUT_DOWN)
+	{
+		mouse_old_X = mouse_curr_X = x;
+		mouse_old_Y = mouse_curr_Y = y;
+
+		switch (button)
+		{
+			case GLUT_LEFT_BUTTON:
+				mouse_left_butt_active = true;
+				break;
+
+			case GLUT_RIGHT_BUTTON:
+				mouse_right_butt_active = true;
+				break;
+		}
+	}
+}
+
+void glutMouseMotion(int x,int y)
+{ 
+	mouse_curr_X = x; 
+	mouse_curr_Y = y;
+
+	if (mouse_left_butt_active && mouse_right_butt_active) 
+	{ 
+		mouse_x_translation += (mouse_curr_X - mouse_old_X)/100.0f; 
+		mouse_y_translation -= (mouse_curr_Y - mouse_old_Y)/100.0f; 
+	} 
+	else if (mouse_left_butt_active) 
+	{ 
+		mouse_x_rotation -= (mouse_curr_X - mouse_old_X); 
+		mouse_y_rotation -= (mouse_curr_Y - mouse_old_Y); 
+	} 
+	else if (mouse_right_butt_active) 
+		mouse_z_translation -= (mouse_curr_Y - mouse_old_Y)/10.f;
+
+	mouse_old_X = mouse_curr_X;
+	mouse_old_Y = mouse_curr_Y;
+}
+
+// *************************************
+// support function
 void drawSceneGraphics()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -380,12 +545,262 @@ void drawSceneGraphics()
 
 	glPopMatrix();
 	glPopAttrib();
-	DisplayInfo();
+	displayInfo();
 	glEnable(GL_TEXTURE_2D);
 	updateWorkspace();
 }
 
 void drawCursor()
 {
-	
+	static const double kCursorRadius = 0.25;
+	static const double kCursorHeight = 1.5;
+	static const int kCursorTess = 15;
+
+	HLdouble proxyxform[16];
+	double proxyPos[3];
+
+	hlGetDoublev(HL_PROXY_POSITION, proxyPos);
+	GLUquadricObj *qobj = 0;
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LIGHTING_BIT);
+	glPushMatrix();
+
+	if (!gCursorDisplayList)
+	{
+		gCursorDisplayList = glGenLists(1);
+		glNewList(gCursorDisplayList, GL_COMPILE);
+		qobj = gluNewQuadric();
+
+		gluCylinder(qobj, 0.0, kCursorRadius, kCursorHeight,
+		kCursorTess, kCursorTess);
+
+		glTranslated(0.0, 0.0, kCursorHeight);
+
+		gluCylinder(qobj, kCursorRadius, 0.0, kCursorHeight / 5.0,
+		kCursorTess, kCursorTess);
+
+		gluDeleteQuadric(qobj);
+		glEndList();
+	}
+
+	// Get the proxy transform in world coordinates.
+	hlGetDoublev(HL_PROXY_TRANSFORM, proxyxform);
+
+	//If entered hole, then freeze the rotations.
+	if (touchedHole)
+	{
+		proxyxform[0] = 1.0;
+		proxyxform[1] = 0.0;
+		proxyxform[2] = 0.0;
+		proxyxform[3] = 0.0;
+		proxyxform[4] = 0.0;
+		proxyxform[5] = 1.0;
+		proxyxform[6] = 0.0;
+		proxyxform[7] = 0.0;
+		proxyxform[8] = 0.0;
+		proxyxform[9] = 0.0;
+		proxyxform[10] = 1.0;
+		proxyxform[11] = 0.0;
+	}
+
+	//Get the depth of Penetration from HLAPI.
+	hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
+	glMultMatrixd(proxyxform);
+
+	//! NB: force is not yet defined, porco dio quando ce l'hai scommenta
+	if (is_touched)
+		cursorToToolTranslation = 0.35;
+	else
+		cursorToToolTranslation = 0.25;
+
+	glTranslatef(0.0,0.0,cursorToToolTranslation);
+
+	// if (is_touched && force[2]>=0.0)
+	// 	glTranslatef(0.0,0.0,-1* needle_DOP);
+
+	glCallList(needle_obj_list);
+	glPopMatrix();
+	glPopAttrib();
+}
+
+
+void updateWorkspace()
+{
+	GLdouble modelview[16];
+	GLdouble projection[16];
+	GLint viewport[4];
+
+	//! Must set those two variables wrt the size of our objects
+	HLdouble minn[3]={-0.4,-0.5, -0.4};
+	HLdouble maxx[3]={0.4,0.5,0.4};
+
+	glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	hlMatrixMode(HL_TOUCHWORKSPACE);
+	hlLoadIdentity();
+	hluFitWorkspaceBox(modelview, minn, maxx);
+
+	// Compute cursor scale.
+	gCursorScale = hluScreenToModelScale(modelview, projection, viewport);
+	gCursorScale *= CURSOR_SIZE_PIXELS;
+	hlMatrixMode(HL_MODELVIEW);
+	hlLoadMatrixd(modelview);
+}
+
+// Drawing haptic stuff in the scene
+void drawSceneHaptics()
+{
+	hlGetDoublev(HL_PROXY_TOUCH_NORMAL, proxy_normal);
+	hlGetDoublev(HL_PROXY_POSITION, proxy_position);
+
+	// Start haptic frame
+	hlBeginFrame();
+	hlPushMatrix();
+
+	//************** SHAPE 1: cube **************//
+	//! Here we have to modify those haptic params to 
+	//! model the wanted interactions (POPTHROUGH, constraints ..)
+	hlTouchModel(HL_CONTACT);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_STIFFNESS, 0.9f);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_DAMPING, 0.0f);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
+	hlHinti(HL_SHAPE_FEEDBACK_BUFFER_VERTICES, cube_model->numvertices);
+	hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, cube_id); //! FEEDBACK or DEPTH??
+	hlEndShape();
+	hlPopMatrix();
+
+
+	//************** SHAPE 2: surface_contact_point **************//
+	hlPushMatrix();
+	hlTouchModel(HL_CONSTRAINT);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_STIFFNESS, 0.4f);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_DAMPING, 0.3f);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
+
+	//! NB force is not generated yet
+	// if (is_touched && force[2] > -0.1 )
+	// {
+	// 	hlTouchModelf(HL_SNAP_DISTANCE, 300.0);
+	// }
+	// else
+	// {
+	// 	hlTouchModelf(HL_SNAP_DISTANCE, 3.0);
+	// }
+
+	hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, contact_point_id);
+
+	//! contact_point_id must be transformed accordingly to surface_cp position
+	//! VERIFY THOSE TRANSLATIONS
+	glPushMatrix();
+	glPointSize(5.0);
+	glTranslatef(0.0, 0.0, 1.0); 
+	glBegin(GL_POINTS);
+	glVertex3f(surface_cp[0], surface_cp[1], surface_cp[2]);
+	glEnd();
+
+	glPopMatrix();
+	hlEndShape();
+	hlPopMatrix();
+
+	// End the haptic frame.
+	hlEndFrame();
+
+}
+
+
+
+void displayInfo()
+{
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glPushMatrix();
+	glLoadIdentity();
+
+	int gwidth, gheight;
+	gwidth = glutGet(GLUT_WINDOW_WIDTH);
+	gheight = glutGet(GLUT_WINDOW_HEIGHT);
+
+	// switch to 2d orthographic mMode for drawing text
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+
+	gluOrtho2D(0, gwidth, gheight, 0);
+	glMatrixMode(GL_MODELVIEW);
+
+	glColor3f(1.0, 1.0, 1.0);
+
+	int textRowDown = 0;                                    // lines of text already drawn downwards from the top
+
+	int textRowUp = 0;                                      // lines of text already drawn upwards from the bottom
+
+	DrawBitmapString(0 , 80 , GLUT_BITMAP_HELVETICA_18, "INSTRUCTIONS: ");
+	DrawBitmapString(0 , 100 , GLUT_BITMAP_HELVETICA_18, "Use Right-click menu to Quit the Demo");
+
+	DrawBitmapString(0 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "LAYER 1 penetrated: ");
+
+	if (probeDop > 0.1 && touchedHole)
+		DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "Yes");
+	else
+		DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "No");
+
+	DrawBitmapString(0 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "LAYER 2 penetrated: ");
+
+	if (probeDop > 0.25 && touchedHole)
+		DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "Yes");
+	else
+		DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "No");
+
+	DrawBitmapString(0 , gheight-60 , GLUT_BITMAP_HELVETICA_18, "Depth of Penetration: %f ",probeDop );
+
+	DrawBitmapString(gwidth/2, gheight - 300 , GLUT_BITMAP_TIMES_ROMAN_24, "Entry Point");
+
+	DrawBitmapString(gwidth-250, gheight - 80 , GLUT_BITMAP_HELVETICA_12, "Models & Textures courtesy ");
+
+	DrawBitmapString(gwidth-250, gheight - 60 , GLUT_BITMAP_HELVETICA_18, "mySmartSimulations, Inc.");
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glPopMatrix();
+
+	// turn depth and lighting back on for 3D rendering
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_TEXTURE_2D);
+}
+
+
+void exitHandler()
+{
+	// Deallocate the sphere shape id we reserved in initHL.
+	if (cube_model)
+	{
+		hlDeleteShapes(cube_id, 1);
+		hlDeleteShapes(contact_point_id, 1);
+	}
+
+	// Free up the haptic rendering context.
+	hlMakeCurrent(NULL);
+
+	if (ghHLRC != NULL)
+	{
+		hlDeleteContext(ghHLRC);
+	}
+
+	// Free up the haptic device.
+	if (ghHD != HD_INVALID_HANDLE)
+	{
+		hdDisableDevice(ghHD);
+	}
+}
+
+void handleKeyboard(unsigned char key, int x, int y)
+{
+	if (key == 27)
+		exit(0);
 }
