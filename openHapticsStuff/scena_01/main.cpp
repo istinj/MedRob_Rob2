@@ -72,11 +72,19 @@ bool is_touched = false;
 // *************************************************** //
 
 // Declaring OpenGL Functions
+void initScene();
 void initOpenGL();
+void initHL();
 void initCube();
 void initNeedle();
-void initHL();
-void initScene();
+
+// Graphical callbacks
+void glutDisplayCB(void);
+
+// Support functions
+void drawSceneGraphics();
+void drawSceneHaptics();
+void drawCursor();
 
 // Declaring callbacks' 
 void HLCALLBACK hlTouchCubeCB(HLenum event,
@@ -90,18 +98,38 @@ void HLCALLBACK hlUntouchCubeCB(HLenum event,
 		HLcache *cache,
 		void *userdata);
 
+// Main HD callbacks
+HDCallbackCode HDCALLBACK hdBeginCB(void *data);
+HDCallbackCode HDCALLBACK hdEndCB(void *data);
 
+
+
+
+// *************************************************** //
+// ********************** MAIN  ********************** //
+// *************************************************** //
 
 int main(int argc, char const *argv[])
 {
-	printf("Initializing OpenGL\n");
-	initOpenGL();
+	// Init window
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitWindowSize(500, 500);
+	glutCreateWindow("Needle Insertion");
 
-	printf("Initializing scene\n");
-	initCube();
-	initNeedle();
+	glutDisplayFunc(glutDisplay);
+
+	printf("Initializing scene and OpenGL\n");
+	initScene();
 	return 0;
 }
+
+
+
+
+// *************************************************** //
+// ******************** FUNCTIONS  ******************* //
+// *************************************************** //
 
 // Initializing OpenHaptics and device
 void initHL()
@@ -248,7 +276,7 @@ void initNeedle()
 	glEndList();
 }
 
-
+// Haptic callbacks
 void HLCALLBACK hlTouchCubeCB(HLenum event,
 		HLuint object, 
 		HLenum thread,
@@ -260,9 +288,6 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 	cout << "Touching the surface!" << endl;
 }
 
-
-
-
 void HLCALLBACK hlUntouchCubeCB(HLenum event,
 		HLuint object, 
 		HLenum thread,
@@ -273,4 +298,94 @@ void HLCALLBACK hlUntouchCubeCB(HLenum event,
 	//! actually exiting
 	is_touched = false;
 	cout << "Now outiside"
+}
+
+
+HDCallbackCode HDCALLBACK hdBeginCB(void *data)
+{
+	// Starting the frame (HL)
+	HHD current_device_handler = hdGetCurrentDevice();
+	hdBeginFrame(current_device_handler);
+
+	// Handling HD-errors
+	HDErrorInfo error;
+	if (HD_DEVICE_ERROR(error = hdGetError()))
+	{
+		hduPrintError(stderr, &error, "Error in hdBeginCB callback\n");
+		return HD_CALLBACK_DONE;
+	}
+	return HD_CALLBACK_CONTINUE;
+}
+
+// This function handles the force constraints due to penetration
+HDCallbackCode HDCALLBACK hdEndCB(void *data)
+{
+
+	//! PLACEHOLDER
+
+	HHD current_device_handler = hdGetCurrentDevice();
+	hdEndFrame(current_device_handler);
+	HDErrorInfo error;
+
+	if (HD_DEVICE_ERROR(error = hdGetError()))
+	{
+		hduPrintError(stderr, &error, "Error in hdEndCB\n");
+	}
+
+	return HD_CALLBACK_CONTINUE;
+}
+
+// Graphical callbacks
+void glutDisplayCB(void)
+{
+	drawSceneGraphics();
+	drawSceneHaptics();
+
+	// swap buffers to show graphics results on screen
+	glutSwapBuffer();
+}
+
+
+void drawSceneGraphics()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	// place camera/eye
+	glTranslatef(mouse_x_translation ,mouse_y_translation ,mouse_z_translation);
+	glRotatef(-mouse_y_rotation, 1.0,0.0,0.0);
+	glRotatef(-mouse_x_rotation, 0.0,1.0,0.0);
+	glDisable(GL_TEXTURE_2D);
+
+	drawCursor();
+
+	glEnable(GL_TEXTURE_2D);
+	glPushMatrix();
+	glCallList(cube_obj_list); //Displays regular OBJ model
+
+	glPopMatrix();
+
+	//Uncomment to see the Entry Point
+	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LIGHTING_BIT);
+	glDisable(GL_TEXTURE_2D);
+	glPushMatrix();
+	glPointSize(15.0);
+	glTranslatef(0.0, 0.0, 1.0);
+	glBegin(GL_POINTS);
+	glEnable(GL_COLOR_MATERIAL);
+	glColor3f(0.0,0.0,1.0);
+	glVertex3f(0.05,-0.175,0.975);
+	glEnd();
+
+	glPopMatrix();
+	glPopAttrib();
+	DisplayInfo();
+	glEnable(GL_TEXTURE_2D);
+	updateWorkspace();
+}
+
+void drawCursor()
+{
+	
 }
