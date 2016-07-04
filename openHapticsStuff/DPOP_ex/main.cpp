@@ -61,6 +61,14 @@ for best performance.
 #include "GLM.h"
 #include "tga.h"
 
+using namespace std;
+
+int count = 0;
+static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0);
+static HDdouble proxy_contact_T[16];
+hduMatrix temp_T;
+
+
 //File Names
 char *model1Path("/examples/models/hiResPlane2.obj");
 char *model2Path("/examples/models/LumbarBallProbe.obj");
@@ -188,44 +196,97 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
     hdSetDoublev(HD_FORCE_RAMPING_RATE, &kRampUpRate );
     hdGetDoublev(HD_CURRENT_FORCE, force);
 
-    printf("CURRENT_FORCE before setting it: %f %f %f  \n", force[0], force[1], force[2]);
+    // printf("CURRENT_FORCE before setting it: %f %f %f  \n", force[0], force[1], force[2]);
 
 //Create custom haptic layers. There are two layers here
 //at DOP = 0.1  and DOP = 0.35 .
-
+    hduVector3Dd p_pos;
+    hlGetDoublev(HL_DEVICE_POSITION, p_pos);
+    cout << "Device position a rota: " << p_pos << endl;
     if (touchedHole && force[2]>=0.0)
     {
-        if (probeDop > 0.0 && probeDop < 0.0125)
+        // if (probeDop > 0.0 && probeDop < 0.0125)
+        //     force[2] = 0.25;
+        // else if (probeDop > 0.0 && probeDop < 0.025)
+        //     force[2] = 0.5;
+        // else if (probeDop > 0.025 && probeDop < 0.05)
+        //     force[2] = 0.75;
+        // else if (probeDop > 0.05 && probeDop < 0.075)
+        //     force[2] = 1.0;
+        // else if (probeDop > 0.075 && probeDop < 0.09)
+        //     force[2] = 1.5;
+        // else if (probeDop > 0.09 && probeDop < 0.1)
+        //     force[2] = 0.0;
+        // else if (probeDop > 0.1 && probeDop < 0.2)
+        //     force[2] = 0.25;
+        // else if (probeDop > 0.2 && probeDop < 0.225)
+        //     force[2] = 0.5;
+        // else if (probeDop > 0.225 && probeDop < 0.25)
+        //     force[2] = 0.75;
+        // else if (probeDop > 0.25 && probeDop < 0.275)
+        //     force[2] = 0.0;
+        // else if (probeDop > 0.275 && probeDop < 0.3)
+        //     force[2] = 0.0;
+        // else if (probeDop > 0.3 && probeDop < 0.35)
+        //     force[2] = 0.25;
+        // else if (probeDop > 0.35 && probeDop < 0.4)
+        //     force[2] = 0.5;
+        // else if (probeDop > 0.4)
+        //     force[2] = 0.5;
+
+        if (probeDop > 0.0 && probeDop < 0.2)
             force[2] = 0.25;
-        else if (probeDop > 0.0 && probeDop < 0.025)
-            force[2] = 0.5;
-        else if (probeDop > 0.025 && probeDop < 0.05)
-            force[2] = 0.75;
-        else if (probeDop > 0.05 && probeDop < 0.075)
-            force[2] = 1.0;
-        else if (probeDop > 0.075 && probeDop < 0.09)
-            force[2] = 1.5;
-        else if (probeDop > 0.09 && probeDop < 0.1)
-            force[2] = 0.0;
-        else if (probeDop > 0.1 && probeDop < 0.2)
-            force[2] = 0.25;
-        else if (probeDop > 0.2 && probeDop < 0.225)
-            force[2] = 0.5;
-        else if (probeDop > 0.225 && probeDop < 0.25)
-            force[2] = 0.75;
-        else if (probeDop > 0.25 && probeDop < 0.275)
-            force[2] = 0.0;
-        else if (probeDop > 0.275 && probeDop < 0.3)
-            force[2] = 0.0;
-        else if (probeDop > 0.3 && probeDop < 0.35)
-            force[2] = 0.25;
-        else if (probeDop > 0.35 && probeDop < 0.4)
-            force[2] = 0.5;
-        else if (probeDop > 0.4)
-            force[2] = 0.5;
+        else if (probeDop >= 0.2 && probeDop < 4)
+            force[2] = 0.4;
+        
+        hduVector3Dd gimbal_angles;
+        hdGetDoublev(HD_CURRENT_GIMBAL_ANGLES, gimbal_angles);
+
+        hduMatrix w_to_ee_R;
+        hlGetDoublev(HL_TOUCHWORKSPACE_MATRIX, w_to_ee_R);
+        w_to_ee_R.invert();
+
+        temp_T = hduMatrix(proxy_contact_T);
+
+        hduMatrix rotation_m;
+        hduVector3Dd force_trans;
+
+        temp_T.getRotationMatrix(rotation_m);
+        temp_T.invert();
+
+        // rotation_m = hduMatrix.identity();
+        rotation_m(0,0) = 1;
+        rotation_m(0,1) = 0;
+        rotation_m(0,2) = 0;
+        rotation_m(1,0) = 0;
+        rotation_m(1,1) = 0;
+        rotation_m(1,2) = 1;
+        rotation_m(2,0) = 0;
+        rotation_m(2,1) = 1;
+        rotation_m(2,2) = 0;
+        rotation_m.multMatrixDir(force,force_trans);
+
+
+        // auto norm = sqrt(force_trans[0]*force_trans[0] + 
+        //     force_trans[1]*force_trans[1] + 
+        //     force_trans[2]*force_trans[2]);
+        // force_trans = force_trans / norm;
 
         hdSetDoublev(HD_CURRENT_FORCE, force*forceScaler);
-        printf("\nCURRENT_FORCE after setting it: %f %f %f  \n", force[0], force[1], force[2]);
+        // hdSetDoublev(HD_CURRENT_FORCE, force_trans*forceScaler);
+        if (count == 500)
+        {   
+            cout << "half sec passed?" << endl;
+            printf("\nRef force: %f %f %f  \n", force[0], force[1], force[2]);
+            cout << "Matrix: \n" << rotation_m << endl;
+            printf("\nTRANSFORMED force: %f %f %f  \n", force_trans[0], force_trans[1], force_trans[2]);
+
+            cout << "\nGIMBAL ANGLES: " << gimbal_angles << endl;
+
+            cout << endl << "HL_TOUCHWORKSPACE_MATRIX inversa: " << endl << w_to_ee_R << endl;
+            count = 0;
+        }
+        count++;
     }
 
 // calling hdEndFrame decrements the frame counter.
@@ -849,18 +910,22 @@ void drawCursor()
 //If entered hole, then freeze the rotations.
     if (touchedHole)
     {
-        proxyxform[0] = 1.0;
-        proxyxform[1] = 0.0;
-        proxyxform[2] = 0.0;
-        proxyxform[3] = 0.0;
-        proxyxform[4] = 0.0;
-        proxyxform[5] = 1.0;
-        proxyxform[6] = 0.0;
-        proxyxform[7] = 0.0;
-        proxyxform[8] = 0.0;
-        proxyxform[9] = 0.0;
-        proxyxform[10] = 1.0;
-        proxyxform[11] = 0.0;
+        // proxyxform[0] = 1.0;
+        // proxyxform[1] = 0.0;
+        // proxyxform[2] = 0.0;
+        // proxyxform[3] = 0.0;
+        // proxyxform[4] = 0.0;
+        // proxyxform[5] = 1.0;
+        // proxyxform[6] = 0.0;
+        // proxyxform[7] = 0.0;
+        // proxyxform[8] = 0.0;
+        // proxyxform[9] = 0.0;
+        // proxyxform[10] = 1.0;
+        // proxyxform[11] = 0.0;
+        for (int i = 0; i < 12; i++)
+        {
+            proxyxform[i] = proxy_contact_T[i];
+        }
     }
 
 //Get the depth of Penetration from HLAPI.
@@ -1130,6 +1195,18 @@ void HLCALLBACK hlTouchCB(HLenum event, HLuint object,
     touchedHole = true;
 
     printf("Entered hole in spine\n");
+
+
+    hlGetDoublev(HL_PROXY_POSITION, proxy_contact_pos);
+    hlGetDoublev(HL_PROXY_TRANSFORM, proxy_contact_T);
+    
+
+    printf("PROXY Position is: %f %f %f \n", proxy_contact_pos[0], proxy_contact_pos[1], proxy_contact_pos[2]);
+    // cout << " PROXY Current Transformation is: " << endl <<
+    //     proxy_contact_T[0] << "\t" << proxy_contact_T[4] << "\t" << proxy_contact_T[8] << "\t" << proxy_contact_T[12] << endl <<
+    //     proxy_contact_T[1] << "\t" << proxy_contact_T[5] << "\t" << proxy_contact_T[9] << "\t" << proxy_contact_T[13] << endl <<
+    //     proxy_contact_T[2] << "\t" << proxy_contact_T[6] << "\t" << proxy_contact_T[10] << "\t" << proxy_contact_T[14] << endl <<
+    //     proxy_contact_T[3] << "\t" << proxy_contact_T[7] << "\t" << proxy_contact_T[11] << "\t" << proxy_contact_T[15] << endl;
 }
 
 
