@@ -10,6 +10,7 @@
 
 // OpenGL include
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 
 // Include OpenHaptics HL
 #include <HL/hl.h>
@@ -107,6 +108,7 @@ void updateWorkspace();
 void displayInfo();
 void exitHandler();
 void handleKeyboard(unsigned char key, int x, int y);
+void DrawBitmapString(GLfloat x, GLfloat y, void *font, char *format,...);
 
 // Declaring callbacks' 
 void HLCALLBACK hlTouchCubeCB(HLenum event,
@@ -200,11 +202,11 @@ void initHL()
 	hlTouchableFace(HL_FRONT);
 
 	//! TO DO: Generate shape ID, add callbacks (hlAddEventCallBack)
-	hlAddEventCallBack(HL_EVENT_TOUCH, 
+	hlAddEventCallback(HL_EVENT_TOUCH, 
 			cube_id,
 			HL_COLLISION_THREAD,
 			hlTouchCubeCB, 0);
-	hlAddEventCallBack(HL_EVENT_TOUCH, 
+	hlAddEventCallback(HL_EVENT_TOUCH, 
 			cube_id,
 			HL_COLLISION_THREAD,
 			hlUntouchCubeCB, 0);
@@ -258,8 +260,8 @@ void initScene()
 	//! loading them
 	initCube();
 	initNeedle();
-	initHL();
 	initOpenGL();
+	initHL();
 }
 
 // Initialize the cube_model
@@ -392,7 +394,7 @@ void glutDisplayCB(void)
 	drawSceneHaptics();
 
 	// swap buffers to show graphics results on screen
-	glutSwapBuffer();
+	glutSwapBuffers();
 }
 
 void glutReshape(int width, int height)
@@ -806,4 +808,24 @@ void handleKeyboard(unsigned char key, int x, int y)
 {
 	if (key == 27)
 		exit(0);
+}
+
+void DrawBitmapString(GLfloat x, GLfloat y, void *font, char *format,...)
+{
+	int len, i;
+	va_list args;
+	char string[256];
+
+	// special C stuff to interpret a dynamic set of arguments specified by "..."
+	va_start(args, format);
+	vsprintf(string, format, args);
+	va_end(args);
+
+	glRasterPos2f(x, y);
+	len = (int) strlen(string);
+
+	for (i = 0; i < len; i++)
+	{
+		glutBitmapCharacter(font, string[i]);
+	}
 }
