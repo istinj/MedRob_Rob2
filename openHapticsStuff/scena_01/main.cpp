@@ -24,6 +24,8 @@
 
 using namespace std;
 
+#define CURSOR_SIZE_PIXELS 20;
+
 // Loading obj paths
 char *cube_path("./models/my_models/cube_10.obj");
 char *needle_path("./models/demo_obj_OH/LumbarBallProbe.obj");
@@ -66,6 +68,7 @@ HLuint contact_point_id;
 bool is_touched = false;
 
 // Other stuff
+static double gCursorScale;
 static GLuint gCursorDisplayList = 0;
 HDdouble needle_DOP;
 HLfloat cursorToToolTranslation = 0.25; //! ??
@@ -128,7 +131,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data);
 // ********************** MAIN  ********************** //
 // *************************************************** //
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
 	// Init window
 	glutInit(&argc, argv);
@@ -136,7 +139,7 @@ int main(int argc, char const *argv[])
 	glutInitWindowSize(500, 500);
 	glutCreateWindow("Needle Insertion");
 
-	glutDisplayFunc(glutDisplay);
+	glutDisplayFunc(glutDisplayCB);
 	glutReshapeFunc(glutReshape);
 	glutIdleFunc(glutIdle);
 	glutCreateMenu(glutMenu);
@@ -339,7 +342,7 @@ void HLCALLBACK hlUntouchCubeCB(HLenum event,
 	//! The force must be negative along the hole axis if we are 
 	//! actually exiting
 	is_touched = false;
-	cout << "Now outiside"
+	cout << "Now outiside" << endl;
 	// Reset the surface_cp to 0.0
 	surface_cp[0] = 0.0; surface_cp[1] = 0.0; surface_cp[2] = 0.0;
 
@@ -438,10 +441,10 @@ void glutIdle()
 		}
 	}
 
-	char title[40];
-	sprintf(title, "Haptic Displacement Mapping %4.1f fps", DetermineFPS());
+	// char title[40];
+	// sprintf(title, "Haptic Displacement Mapping %4.1f fps", DetermineFPS());
 
-	glutSetWindowTitle(title);
+	// glutSetWindowTitle(title);
 	glutPostRedisplay();
 }
 
@@ -586,7 +589,7 @@ void drawCursor()
 	hlGetDoublev(HL_PROXY_TRANSFORM, proxyxform);
 
 	//If entered hole, then freeze the rotations.
-	if (touchedHole)
+	if (is_touched)
 	{
 		proxyxform[0] = 1.0;
 		proxyxform[1] = 0.0;
@@ -743,19 +746,19 @@ void displayInfo()
 
 	DrawBitmapString(0 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "LAYER 1 penetrated: ");
 
-	if (probeDop > 0.1 && touchedHole)
+	if (needle_DOP > 0.1 && is_touched)
 		DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "Yes");
 	else
 		DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "No");
 
 	DrawBitmapString(0 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "LAYER 2 penetrated: ");
 
-	if (probeDop > 0.25 && touchedHole)
+	if (needle_DOP > 0.25 && is_touched)
 		DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "Yes");
 	else
 		DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "No");
 
-	DrawBitmapString(0 , gheight-60 , GLUT_BITMAP_HELVETICA_18, "Depth of Penetration: %f ",probeDop );
+	DrawBitmapString(0 , gheight-60 , GLUT_BITMAP_HELVETICA_18, "Depth of Penetration: %f ",needle_DOP );
 
 	DrawBitmapString(gwidth/2, gheight - 300 , GLUT_BITMAP_TIMES_ROMAN_24, "Entry Point");
 
