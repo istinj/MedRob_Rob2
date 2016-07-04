@@ -1,5 +1,5 @@
-CC=gcc
-CFLAGS+=-W -g -DNDEBUG -Dlinux
+CC=clang
+CFLAGS+=-W -g -DNDEBUG -Dlinux -w 
 LIBS = -lHL -lHLU -lHDU -lHD -lGL -lGLU -lglut -lrt -lncurses -lstdc++ -lm
 
 TARGET=HL_DOP_Demo

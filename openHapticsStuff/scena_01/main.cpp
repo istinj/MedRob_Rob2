@@ -62,6 +62,7 @@ static HHLRC ghHLRC = 0;
 
 // Shape id declaration
 HLuint cube_id;
+HLuint needle_id;
 HLuint contact_point_id;
 
 // Booalean flag set to true if the surface is touched
@@ -75,8 +76,9 @@ HLfloat cursorToToolTranslation = 0.25; //! ??
 
 hduVector3Dd proxy_normal(0.0,0.0,0.0);
 hduVector3Dd proxy_position(0.0,0.0,0.0);
-static hduVector3Dd surface_cp(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
+static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
 											//! Rest-values may be wrong
+static HDdouble proxy_contact_T[16];
 
 
 
@@ -116,6 +118,11 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 		HLcache *cache,
 		void *userdata);
 void HLCALLBACK hlUntouchCubeCB(HLenum event,
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata);
+void HLCALLBACK hlNeedleMotionCB(HLenum event,
 		HLuint object, 
 		HLenum thread,
 		HLcache *cache,
@@ -197,10 +204,10 @@ void initHL()
 
 	// Generate id for the shape.
 	cube_id = hlGenShapes(1);
-	contact_point_id = hlGenShapes(1);
+	needle_id = hlGenShapes(1);
 	hlTouchableFace(HL_FRONT);
 
-	//! TO DO: Generate shape ID, add callbacks (hlAddEventCallBack)
+	//! TO DO: Generate shape ID, add callbacks (hlAddEventCallback)
 	hlAddEventCallback(HL_EVENT_TOUCH, 
 			cube_id,
 			HL_COLLISION_THREAD,
@@ -209,6 +216,12 @@ void initHL()
 			cube_id,
 			HL_COLLISION_THREAD,
 			hlUntouchCubeCB, 0);
+
+	// MOTION
+	hlAddEventCallback(HL_EVENT_MOTION,
+			needle_id,
+			HL_COLLISION_THREAD,
+			hlNeedleMotionCB,0);
 }
 
 
@@ -328,10 +341,16 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 
 	if (!is_touched)
 	{
-		hlGetDoublev(HL_PROXY_POSITION, surface_cp);
+		hlGetDoublev(HL_PROXY_POSITION, proxy_contact_pos);
+		hlGetDoublev(HL_PROXY_TRANSFORM, proxy_contact_T);
 		is_touched = true;
 
-		printf("PROXY Position is: %f %f %f \n", surface_cp[0], surface_cp[1], surface_cp[2]);
+		printf("PROXY Position is: %f %f %f \n", proxy_contact_pos[0], proxy_contact_pos[1], proxy_contact_pos[2]);
+		cout << " NEEDLE Current Transformation is: " << endl <<
+			proxy_contact_T[0] << "\t" << proxy_contact_T[4] << "\t" << proxy_contact_T[8] << "\t" << proxy_contact_T[12] << endl <<
+			proxy_contact_T[1] << "\t" << proxy_contact_T[5] << "\t" << proxy_contact_T[9] << "\t" << proxy_contact_T[13] << endl <<
+			proxy_contact_T[2] << "\t" << proxy_contact_T[6] << "\t" << proxy_contact_T[10] << "\t" << proxy_contact_T[14] << endl <<
+			proxy_contact_T[3] << "\t" << proxy_contact_T[7] << "\t" << proxy_contact_T[11] << "\t" << proxy_contact_T[15] << endl;
 	}
 	else
 		is_touched = true;
@@ -349,9 +368,18 @@ void HLCALLBACK hlUntouchCubeCB(HLenum event,
 	//! actually exiting
 	is_touched = false;
 	cout << "Now outiside" << endl;
-	// Reset the surface_cp to 0.0
-	surface_cp[0] = 0.0; surface_cp[1] = 0.0; surface_cp[2] = 0.0;
+	// Reset the proxy_contact_pos to 0.0
+	proxy_contact_pos[0] = 0.0; proxy_contact_pos[1] = 0.0; proxy_contact_pos[2] = 0.0;
 
+}
+
+void HLCALLBACK hlNeedleMotionCB(HLenum event,
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata)
+{
+	// Placeholder.
 }
 
 
@@ -681,38 +709,16 @@ void drawSceneHaptics()
 	hlPopMatrix();
 
 
-	//************** SHAPE 2: surface_contact_point **************//
-	hlPushMatrix();
-	hlTouchModel(HL_CONSTRAINT);
-	hlMaterialf(HL_FRONT_AND_BACK, HL_STIFFNESS, 0.4f);
-	hlMaterialf(HL_FRONT_AND_BACK, HL_DAMPING, 0.3f);
-	hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
-	hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
-
-	//! NB force is not generated yet
-	// if (is_touched && force[2] > -0.1 )
-	// {
-	// 	hlTouchModelf(HL_SNAP_DISTANCE, 300.0);
-	// }
-	// else
-	// {
-	// 	hlTouchModelf(HL_SNAP_DISTANCE, 3.0);
-	// }
-
-	hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, contact_point_id);
-
-	//! contact_point_id must be transformed accordingly to surface_cp position
-	//! VERIFY THOSE TRANSLATIONS
-	glPushMatrix();
-	glPointSize(5.0);
-	glTranslatef(0.0, 0.0, 1.0); 
-	glBegin(GL_POINTS);
-	glVertex3f(surface_cp[0], surface_cp[1], surface_cp[2]);
-	glEnd();
-
-	glPopMatrix();
-	hlEndShape();
-	hlPopMatrix();
+	//************** SHAPE 2: needle **************//
+	// PLACEHOLDER, for the needle
+	// hlTouchModel(HL_CONTACT);
+	// hlMaterialf(HL_FRONT_AND_BACK, HL_STIFFNESS, 0.9f);
+	// hlMaterialf(HL_FRONT_AND_BACK, HL_DAMPING, 0.0f);
+	// hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
+	// hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
+	// hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, needle_id); //! FEEDBACK or DEPTH??
+	// hlEndShape();
+	// hlPopMatrix();
 
 	// End the haptic frame.
 	hlEndFrame();

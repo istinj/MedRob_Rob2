@@ -2,5 +2,5 @@
 
 clear
 clear
-make
+make -s
 ./HL_DOP_Demo
