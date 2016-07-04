@@ -188,6 +188,8 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
     hdSetDoublev(HD_FORCE_RAMPING_RATE, &kRampUpRate );
     hdGetDoublev(HD_CURRENT_FORCE, force);
 
+    printf("CURRENT_FORCE before setting it: %f %f %f  \n", force[0], force[1], force[2]);
+
 //Create custom haptic layers. There are two layers here
 //at DOP = 0.1  and DOP = 0.35 .
 
@@ -223,6 +225,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
             force[2] = 0.5;
 
         hdSetDoublev(HD_CURRENT_FORCE, force*forceScaler);
+        printf("\nCURRENT_FORCE after setting it: %f %f %f  \n", force[0], force[1], force[2]);
     }
 
 // calling hdEndFrame decrements the frame counter.

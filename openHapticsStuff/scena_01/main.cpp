@@ -10,7 +10,6 @@
 
 // OpenGL include
 #include <GL/glut.h>
-#include <GL/freeglut.h>
 
 // Include OpenHaptics HL
 #include <HL/hl.h>
@@ -175,7 +174,7 @@ void initHL()
 	if (HD_DEVICE_ERROR(error = hdGetError()))
 	{
 		hduPrintError(stderr, &error, "Failed to initialize haptic device");
-		fprintf(stderr, "Press any key to exit");
+		fprintf(stderr, "\nPress any key to exit \n\n");
 		getchar();
 		exit(-1);
 	}
@@ -325,13 +324,18 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 		void *userdata)
 {
 	//! Placeholder
-	is_touched = true;
+	
 
 	if (!is_touched)
 	{
 		hlGetDoublev(HL_PROXY_POSITION, surface_cp);
 		is_touched = true;
+
+		printf("PROXY Position is: %f %f %f \n", surface_cp[0], surface_cp[1], surface_cp[2]);
 	}
+	else
+		is_touched = true;
+
 	cout << "Touching the surface!" << endl;
 }
 
