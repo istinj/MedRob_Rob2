@@ -198,12 +198,19 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 
     // printf("CURRENT_FORCE before setting it: %f %f %f  \n", force[0], force[1], force[2]);
 
-//Create custom haptic layers. There are two layers here
-//at DOP = 0.1  and DOP = 0.35 .
-    hduVector3Dd p_pos;
-    hlGetDoublev(HL_DEVICE_POSITION, p_pos);
-    cout << "Device position a rota: " << p_pos << endl;
-    if (touchedHole && force[2]>=0.0)
+    //Create custom haptic layers. There are two layers here
+    //at DOP = 0.1  and DOP = 0.35 .
+    temp_T = hduMatrix(proxy_contact_T);
+    temp_T.invert();
+
+    hduVector3Dd force_trans;
+
+    hduMatrix device_transf;
+    hdGetDoublev(HD_CURRENT_TRANSFORM, device_transf);
+
+    device_transf.multMatrixDir(force, force_trans);
+
+    if (touchedHole && force_trans[2]>=0.0)
     {
         // if (probeDop > 0.0 && probeDop < 0.0125)
         //     force[2] = 0.25;
@@ -235,55 +242,20 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
         //     force[2] = 0.5;
 
         if (probeDop > 0.0 && probeDop < 0.2)
-            force[2] = 0.25;
+            force_trans[2] = 0.25;
         else if (probeDop >= 0.2 && probeDop < 4)
-            force[2] = 0.4;
-        
-        hduVector3Dd gimbal_angles;
-        hdGetDoublev(HD_CURRENT_GIMBAL_ANGLES, gimbal_angles);
+            force_trans[2] = 0.4;
 
-        hduMatrix w_to_ee_R;
-        hlGetDoublev(HL_TOUCHWORKSPACE_MATRIX, w_to_ee_R);
-        w_to_ee_R.invert();
-
-        temp_T = hduMatrix(proxy_contact_T);
-
-        hduMatrix rotation_m;
-        hduVector3Dd force_trans;
-
-        temp_T.getRotationMatrix(rotation_m);
-        temp_T.invert();
-
-        // rotation_m = hduMatrix.identity();
-        rotation_m(0,0) = 1;
-        rotation_m(0,1) = 0;
-        rotation_m(0,2) = 0;
-        rotation_m(1,0) = 0;
-        rotation_m(1,1) = 0;
-        rotation_m(1,2) = 1;
-        rotation_m(2,0) = 0;
-        rotation_m(2,1) = 1;
-        rotation_m(2,2) = 0;
-        rotation_m.multMatrixDir(force,force_trans);
-
-
-        // auto norm = sqrt(force_trans[0]*force_trans[0] + 
-        //     force_trans[1]*force_trans[1] + 
-        //     force_trans[2]*force_trans[2]);
-        // force_trans = force_trans / norm;
-
-        hdSetDoublev(HD_CURRENT_FORCE, force*forceScaler);
-        // hdSetDoublev(HD_CURRENT_FORCE, force_trans*forceScaler);
+        // hdSetDoublev(HD_CURRENT_FORCE, force*forceScaler);
+        hdSetDoublev(HD_CURRENT_FORCE, force_trans*forceScaler);
         if (count == 500)
         {   
-            cout << "half sec passed?" << endl;
             printf("\nRef force: %f %f %f  \n", force[0], force[1], force[2]);
-            cout << "Matrix: \n" << rotation_m << endl;
+
             printf("\nTRANSFORMED force: %f %f %f  \n", force_trans[0], force_trans[1], force_trans[2]);
 
-            cout << "\nGIMBAL ANGLES: " << gimbal_angles << endl;
+            cout << "Device transform a rota: \n" << device_transf << endl;
 
-            cout << endl << "HL_TOUCHWORKSPACE_MATRIX inversa: " << endl << w_to_ee_R << endl;
             count = 0;
         }
         count++;
