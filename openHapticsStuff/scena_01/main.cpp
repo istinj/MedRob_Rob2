@@ -27,7 +27,7 @@ using namespace std;
 #define CURSOR_SIZE_PIXELS 20;
 
 // Loading obj paths
-char *cube_path("./models/my_models/cube_64f.obj");
+char *cube_path("./models/my_models/cube_1024f.obj");
 char *needle_path("./models/demo_obj_OH/LumbarBallProbe.obj");
 
 // Mouse movements
