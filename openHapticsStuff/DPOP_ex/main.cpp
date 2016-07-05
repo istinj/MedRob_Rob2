@@ -812,7 +812,7 @@ void drawSceneHaptics()
     hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
     hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
 
-    if (touchedHole && force[2] > -0.1 )
+    if (touchedHole && force_trans[2] > -0.1 )
     {
         hlTouchModelf(HL_SNAP_DISTANCE, 300.0);
     }
