@@ -254,8 +254,6 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 
             printf("\nTRANSFORMED force: %f %f %f  \n", force_trans[0], force_trans[1], force_trans[2]);
 
-            cout << "Device transform a rota: \n" << device_transf << endl;
-
             count = 0;
         }
         count++;

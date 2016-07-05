@@ -32,7 +32,7 @@ char *needle_path("./models/demo_obj_OH/LumbarBallProbe.obj");
 
 // Mouse movements
 static int mouse_old_X, mouse_old_Y, mouse_curr_X, mouse_curr_Y; // mouse pose
-static bool mouse_right_butt_active, mouse_left_butt_active; //bool for clicks
+static bool mouse_mid_butt_active, mouse_left_butt_active; //bool for clicks
 
 // Initializing mouse translations and rotations of the scene
 float mouse_x_translation = 0.0f;
@@ -63,7 +63,6 @@ static HHLRC ghHLRC = 0;
 // Shape id declaration
 HLuint cube_id;
 HLuint needle_id;
-HLuint contact_point_id;
 
 // Booalean flag set to true if the surface is touched
 bool is_touched = false;
@@ -156,7 +155,8 @@ int main(int argc, char *argv[])
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 	glutKeyboardFunc(handleKeyboard);
 
-	//! ADD MOUSE MOVEMENT glutMouseFunc + motion
+	glutMouseFunc(glutMouse);
+	glutMotionFunc(glutMouseMotion);
 
 	atexit(exitHandler);
 	initScene();
@@ -291,13 +291,16 @@ void initCube()
 
 		//! OBJ spatial modification here:
 		glmUnitize(cube_model);
-		// glmScale(cube_model, 0.250);
+		// glRotatef(45,0,0,1);
+		glmScale(cube_model, 0.350);
 		glmFacetNormals(cube_model);
 		glmVertexNormals(cube_model, 90.0);
 	}
 
 	cube_obj_list = glGenLists(1);
 	glNewList(cube_obj_list, GL_COMPILE);
+	glTranslatef(0.0f,-0.15f,-0.19f);
+	glRotatef(30.0f, 1.0f, 0.0f, 0.0f);
 	// glmDraw(objmodel, GLM_SMOOTH | GLM_TEXTURE); // if textures
 	glmDraw(cube_model, GLM_SMOOTH );
 	glEndList();
@@ -500,9 +503,8 @@ void glutMouse(int button,int state,int x,int y)
 			case GLUT_LEFT_BUTTON:
 				mouse_left_butt_active = false;
 				break;
-
-			case GLUT_RIGHT_BUTTON:
-				mouse_right_butt_active = false;
+			case GLUT_MIDDLE_BUTTON:
+				mouse_mid_butt_active = false;
 				break;
 		}
 
@@ -515,10 +517,11 @@ void glutMouse(int button,int state,int x,int y)
 		{
 			case GLUT_LEFT_BUTTON:
 				mouse_left_butt_active = true;
+				cout << " ho premuto il pulsante sx" << endl;
 				break;
-
-			case GLUT_RIGHT_BUTTON:
-				mouse_right_butt_active = true;
+			case GLUT_MIDDLE_BUTTON:
+				mouse_mid_butt_active = true;
+				cout << " ho premuto il pulsante porcodio" << endl;
 				break;
 		}
 	}
@@ -529,7 +532,7 @@ void glutMouseMotion(int x,int y)
 	mouse_curr_X = x; 
 	mouse_curr_Y = y;
 
-	if (mouse_left_butt_active && mouse_right_butt_active) 
+	if (mouse_left_butt_active && mouse_mid_butt_active) 
 	{ 
 		mouse_x_translation += (mouse_curr_X - mouse_old_X)/100.0f; 
 		mouse_y_translation -= (mouse_curr_Y - mouse_old_Y)/100.0f; 
@@ -539,7 +542,7 @@ void glutMouseMotion(int x,int y)
 		mouse_x_rotation -= (mouse_curr_X - mouse_old_X); 
 		mouse_y_rotation -= (mouse_curr_Y - mouse_old_Y); 
 	} 
-	else if (mouse_right_butt_active) 
+	else if (mouse_mid_butt_active) 
 		mouse_z_translation -= (mouse_curr_Y - mouse_old_Y)/10.f;
 
 	mouse_old_X = mouse_curr_X;
@@ -699,12 +702,16 @@ void drawSceneHaptics()
 	//! Here we have to modify those haptic params to 
 	//! model the wanted interactions (POPTHROUGH, constraints ..)
 	hlTouchModel(HL_CONTACT);
-	hlMaterialf(HL_FRONT_AND_BACK, HL_STIFFNESS, 0.9f);
+	hlMaterialf(HL_FRONT_AND_BACK, HL_STIFFNESS, 0.7f);
 	hlMaterialf(HL_FRONT_AND_BACK, HL_DAMPING, 0.0f);
 	hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
 	hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
 	hlHinti(HL_SHAPE_FEEDBACK_BUFFER_VERTICES, cube_model->numvertices);
 	hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, cube_id); //! FEEDBACK or DEPTH??
+
+	glPushMatrix();
+	glCallList(cube_obj_list);
+	glPopMatrix();
 	hlEndShape();
 	hlPopMatrix();
 
@@ -753,30 +760,21 @@ void displayInfo()
 
 	int textRowUp = 0;                                      // lines of text already drawn upwards from the bottom
 
-	DrawBitmapString(0 , 80 , GLUT_BITMAP_HELVETICA_18, "INSTRUCTIONS: ");
-	DrawBitmapString(0 , 100 , GLUT_BITMAP_HELVETICA_18, "Use Right-click menu to Quit the Demo");
+	// DrawBitmapString(0 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "LAYER 1 penetrated: ");
 
-	DrawBitmapString(0 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "LAYER 1 penetrated: ");
+	// if (needle_DOP > 0.1 && is_touched)
+	// 	DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "Yes");
+	// else
+	// 	DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "No");
 
-	if (needle_DOP > 0.1 && is_touched)
-		DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "Yes");
-	else
-		DrawBitmapString(200 , gheight-100 , GLUT_BITMAP_HELVETICA_18, "No");
+	// DrawBitmapString(0 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "LAYER 2 penetrated: ");
 
-	DrawBitmapString(0 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "LAYER 2 penetrated: ");
+	// if (needle_DOP > 0.25 && is_touched)
+	// 	DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "Yes");
+	// else
+	// 	DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "No");
 
-	if (needle_DOP > 0.25 && is_touched)
-		DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "Yes");
-	else
-		DrawBitmapString(200 , gheight-80 , GLUT_BITMAP_HELVETICA_18, "No");
-
-	DrawBitmapString(0 , gheight-60 , GLUT_BITMAP_HELVETICA_18, "Depth of Penetration: %f ",needle_DOP );
-
-	DrawBitmapString(gwidth/2, gheight - 300 , GLUT_BITMAP_TIMES_ROMAN_24, "Entry Point");
-
-	DrawBitmapString(gwidth-250, gheight - 80 , GLUT_BITMAP_HELVETICA_12, "Models & Textures courtesy ");
-
-	DrawBitmapString(gwidth-250, gheight - 60 , GLUT_BITMAP_HELVETICA_18, "mySmartSimulations, Inc.");
+	// DrawBitmapString(0 , gheight-60 , GLUT_BITMAP_HELVETICA_18, "Depth of Penetration: %f ",needle_DOP );
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -796,7 +794,6 @@ void exitHandler()
 	if (cube_model)
 	{
 		hlDeleteShapes(cube_id, 1);
-		hlDeleteShapes(contact_point_id, 1);
 	}
 
 	// Free up the haptic rendering context.
