@@ -814,14 +814,14 @@ void drawSceneHaptics()
     hlMaterialf(HL_FRONT_AND_BACK, HL_STATIC_FRICTION, 0.1);
     hlMaterialf(HL_FRONT_AND_BACK, HL_DYNAMIC_FRICTION,0.1 );
 
-    if (touchedHole && force_trans[2] > -0.1 )
-    {
-        hlTouchModelf(HL_SNAP_DISTANCE, 300.0);
-    }
-    else
-    {
-        hlTouchModelf(HL_SNAP_DISTANCE, 3.0);
-    }
+    // if (touchedHole && force_trans[2] > -0.1 )
+    // {
+    //     hlTouchModelf(HL_SNAP_DISTANCE, 300.0);
+    // }
+    // else
+    // {
+    //     hlTouchModelf(HL_SNAP_DISTANCE, 3.0);
+    // }
 
     hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, gPointId);
     glPushMatrix();

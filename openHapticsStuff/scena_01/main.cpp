@@ -51,6 +51,7 @@ GLMmodel* needle_model = NULL;
 
 GLuint cube_obj_list;
 GLuint needle_obj_list;
+GLuint line_list;
 
 // Declaring haptic device 
 //! Later it will be initialize by a proper function (initHL)
@@ -62,6 +63,7 @@ static HHLRC ghHLRC = 0;
 
 // Shape id declaration
 HLuint cube_id;
+HLuint line_id;
 HLuint needle_id;
 HLuint contact_point_id;
 
@@ -79,11 +81,13 @@ hduVector3Dd force(0.0f, 0.0f, 0.0f);
 hduVector3Dd force_trans(0.0f,0.0f,0.0f);
 hduVector3Dd device_pos(0.0f, 0.0f, 0.0f);
 hduVector3Dd needle_vector(0.0f, 0.0f, 0.0f);
+hduVector3Dd device_contact_pos(0.0f, 0.0f, 0.0f);
+hduVector3Dd dir(0.0f, 0.0f, 0.0f);
 
 HDdouble needle_DOP = 0.0f;
 HDdouble needle_PENETRATION = 0.0f;
 
-static hduVector3Dd contact_pos(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
+static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
 hduMatrix device_transf;
 
 double f_scale = 1.0f;
@@ -214,6 +218,7 @@ void initHL()
 
 	// Generate id for the shape.
 	cube_id = hlGenShapes(1);
+	line_id = hlGenShapes(1);
 	contact_point_id = hlGenShapes(1);
 	needle_id = hlGenShapes(1);
 	hlTouchableFace(HL_FRONT);
@@ -287,6 +292,29 @@ void initScene()
 	initHL();
 }
 
+void initLine()
+{
+	line_list = glGenLists(1);
+	auto temp = dir * 5;
+
+	glNewList(line_list, GL_COMPILE_AND_EXECUTE);
+	glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT);
+	glDisable(GL_LIGHTING);
+	glLineWidth(2.0);
+	glBegin(GL_LINES);
+	glVertex3f(proxy_contact_pos[0], proxy_contact_pos[1], proxy_contact_pos[2]);
+	glVertex3f(temp[0], temp[1], temp[2]);
+	glEnd();
+	glPointSize(4);
+	// glBegin(GL_POINTS);
+	// glVertex3f(proxy_contact_pos[0], proxy_contact_pos[1], proxy_contact_pos[2]);
+	// glVertex3f(temp[0], temp[1], temp[2]);
+	// glEnd();
+	glPopAttrib();
+	glEndList();
+
+}
+
 // Initialize the cube_model
 void initCube()
 {
@@ -354,11 +382,15 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 {
 	is_touched = true;
 
-	hlGetDoublev(HL_PROXY_POSITION, contact_pos);
+	device_contact_pos = device_pos;
+	hlGetDoublev(HL_PROXY_POSITION, proxy_contact_pos);
 	hlGetDoublev(HL_PROXY_TOUCH_NORMAL, contact_normal);
 	hlGetDoublev(HL_DEVICE_TRANSFORM, device_transf);
 
-	cout << "HL_DEVICE_TRANSFORM \t" << device_transf << endl;
+	dir = hduVector3Dd(0.0f, 0.0f, 1.0f);
+	auto temp = device_transf.getInverse();
+	temp.multMatrixDir(dir,dir);
+	dir = (-1) * dir;
 }
 
 void HLCALLBACK hlUntouchCubeCB(HLenum event,
@@ -368,8 +400,6 @@ void HLCALLBACK hlUntouchCubeCB(HLenum event,
 		void *userdata)
 {
 	// is_touched = false;
-	cout << "***************\nNow outiside\n***************" << endl;
-
 }
 
 void HLCALLBACK hlNeedleMotionCB(HLenum event,
@@ -410,28 +440,36 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 
 	// ROBA
 	// hdGetDoublev(HD_CURRENT_TRANSFORM, device_transf);
+	hduVector3Dd temp_norm;
 	device_transf.multMatrixDir(force, force_trans);
 
 	// Prendo la pos corrente
 	hdGetDoublev(HD_CURRENT_POSITION, device_pos);
 
 	// Calculating dop
-	hduVector3Dd temp_norm;
-	device_transf.multMatrixDir(contact_normal, temp_norm);
-
 	if(is_touched)
 	{
-		needle_vector = device_pos - contact_pos;
+		auto temp = device_transf.getInverse();
+		temp.multMatrixDir(contact_normal, temp_norm);
+
+		needle_vector = device_pos - device_contact_pos;
 		needle_PENETRATION = sqrt(needle_vector[0]*needle_vector[0] + 
 			needle_vector[1]*needle_vector[1] + 
 			needle_vector[2]*needle_vector[2]);
 
-		needle_DOP = sqrt(needle_vector[0] * (-contact_normal[0]) + 
-			needle_vector[1] * (-contact_normal[1]) +
-			needle_vector[2] * (-contact_normal[2]));
+		needle_DOP = sqrt(needle_vector[0] * (-temp_norm[0]) + 
+			needle_vector[1] * (-temp_norm[1]) +
+			needle_vector[2] * (-temp_norm[2]));
 
-		if (needle_DOP <= 0.1f)
+		if (isnan(needle_DOP))
+			needle_DOP = 0.0f;
+
+		if (needle_DOP <= 0.2f)
+		{
 			is_touched = false;
+			needle_PENETRATION = 0;
+			cout << "***************\nNow outiside\n***************" << endl;
+		}
 	}
 
 	//! TUTTO QUI DENTRO IL RENDERING DI FORZA
@@ -460,9 +498,12 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 	hdSetDoublev(HD_CURRENT_FORCE, force_trans*f_scale);
 	if (count == 750)
 	{	
-		cout << "PROXY Position @ touch is: \t" << contact_pos << endl;
-		cout << "PROXY Normal   @ touch is: \t" << temp_norm << endl;
+		cout << "PROXY Position @ touch is: \t" << proxy_contact_pos << endl;
+		cout << "DEVICE Position @ touch is:\t" << device_contact_pos << endl;
+		// cout << "PROXY Normal   @ touch is: \t" << temp_norm << endl;
+		cout << "DEVICE CURRENT POS         \t" << device_pos << endl;
 
+		cout << "Needle Penetration:  \t" << needle_PENETRATION << endl;
 		cout << "Tranformed force is: \t" << force_trans << endl;
 		cout << "HD_CURRENT_FORCE:    \t" << kk << endl;
 		cout << "Depth of Penetration:\t" << needle_DOP << endl;
@@ -635,8 +676,14 @@ void drawSceneGraphics()
 	glEnable(GL_TEXTURE_2D);
 	glPushMatrix();
 	glCallList(cube_obj_list); //Displays regular OBJ model
-
 	glPopMatrix();
+	if (is_touched)
+	{
+		glPushMatrix();
+		initLine();
+		glPopMatrix();
+	}
+
 
 	//Uncomment to see the Entry Point
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LIGHTING_BIT);
@@ -773,7 +820,22 @@ void drawSceneHaptics()
 		glPopMatrix();
 		hlEndShape();
 	}
-	hlPopMatrix();
+
+	if (is_touched)
+	{
+		glPushMatrix();
+		hlTouchModel(HL_CONSTRAINT);
+
+		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.2);
+		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0);
+		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0);
+		hlTouchModelf(HL_SNAP_DISTANCE, 30);
+		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER,line_id);
+		initLine();
+		hlEndShape();
+		glPopMatrix();
+
+	}
 
 	// if (is_touched)
 	// {
@@ -788,9 +850,9 @@ void drawSceneHaptics()
 	// 	glPushMatrix();
 	// 	glPointSize(5.0);
 	// 	// glTranslatef(0.0, 0.0, 1.0);
-	// 	glTranslatef(contact_pos[0],
-	// 		contact_pos[1],
-	// 		contact_pos[2]);
+	// 	glTranslatef(proxy_contact_pos[0],
+	// 		proxy_contact_pos[1],
+	// 		proxy_contact_pos[2]);
 	// 	glBegin(GL_POINTS);
 	// 	// glVertex3f(0.05,-0.175,-0.975);
 	// 	glVertex3f(0.0f,0.0f,0.0f);
@@ -802,6 +864,7 @@ void drawSceneHaptics()
 	// }
 
 	// End the haptic frame.
+	hlPopMatrix();
 	hlEndFrame();
 
 }
@@ -868,6 +931,7 @@ void exitHandler()
 	if (cube_model)
 	{
 		hlDeleteShapes(cube_id, 1);
+		hlDeleteShapes(line_id, 1);
 	}
 
 	// Free up the haptic rendering context.
