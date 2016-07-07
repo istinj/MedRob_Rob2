@@ -67,6 +67,7 @@ int count = 0;
 static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0);
 static HDdouble proxy_contact_T[16];
 hduMatrix temp_T;
+hduVector3Dd force_trans;
 
 
 //File Names
@@ -203,8 +204,6 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
     temp_T = hduMatrix(proxy_contact_T);
     temp_T.invert();
 
-    hduVector3Dd force_trans;
-
     hduMatrix device_transf;
     hdGetDoublev(HD_CURRENT_TRANSFORM, device_transf);
 
@@ -248,10 +247,13 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 
         // hdSetDoublev(HD_CURRENT_FORCE, force*forceScaler);
         hdSetDoublev(HD_CURRENT_FORCE, force_trans*forceScaler);
+
+        hduVector3Dd kk;
+        hdGetDoublev(HD_CURRENT_FORCE, kk);
+        device_transf.multMatrixDir(kk, kk);
         if (count == 500)
         {   
-            printf("\nRef force: %f %f %f  \n", force[0], force[1], force[2]);
-
+            cout << "HD_CURRENT_FORCE: \t" << kk << endl;
             printf("\nTRANSFORMED force: %f %f %f  \n", force_trans[0], force_trans[1], force_trans[2]);
 
             count = 0;
