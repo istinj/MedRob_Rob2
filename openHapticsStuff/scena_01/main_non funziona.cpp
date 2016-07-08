@@ -83,13 +83,14 @@ hduVector3Dd device_pos(0.0f, 0.0f, 0.0f);
 hduVector3Dd needle_vector(0.0f, 0.0f, 0.0f);
 hduVector3Dd device_contact_pos(0.0f, 0.0f, 0.0f);
 hduVector3Dd dir(0.0f, 0.0f, 0.0f);
+hduVector3Dd temp_norm;
 
 HDdouble needle_DOP = 0.0f;
 HDdouble needle_PENETRATION = 0.0f;
 
 static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
 hduMatrix device_transf;
-hduMatrix cube_transf;
+hduMatrix inverse_device_transf;
 
 double f_scale = 1.0f;
 int count = 0;
@@ -340,9 +341,9 @@ void initCube()
 	cube_obj_list = glGenLists(1);
 	glNewList(cube_obj_list, GL_COMPILE);
 	glTranslatef(0.0f,-0.15f,-0.19f);
-	// glRotatef(30.0f, 1.0f, 0.0f, 0.0f);
+	glRotatef(30.0f, 1.0f, 0.0f, 0.0f);
 
-	glScalef(0.35f, 0.1f, 0.35f);
+	glScalef(0.35f, 0.75f, 0.35f);
 	// glmDraw(objmodel, GLM_SMOOTH | GLM_TEXTURE); // if textures
 	glmDraw(cube_model, GLM_SMOOTH );
 	glEndList();
@@ -382,13 +383,11 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 		void *userdata)
 {
 	is_touched = true;
-
 	device_contact_pos = device_pos;
 	hlGetDoublev(HL_PROXY_POSITION, proxy_contact_pos);
-	hlGetDoublev(HL_PROXY_TOUCH_NORMAL, contact_normal);
+	// hlGetDoublev(HL_PROXY_TOUCH_NORMAL, contact_normal);
 	hlGetDoublev(HL_DEVICE_TRANSFORM, device_transf);
 
-	// Line drawing
 	dir = hduVector3Dd(0.0f, 0.0f, 1.0f);
 	auto temp = device_transf.getInverse();
 	temp.multMatrixDir(dir,dir);
@@ -412,7 +411,6 @@ void HLCALLBACK hlNeedleMotionCB(HLenum event,
 {
 	// Placeholder.
 }
-
 
 HDCallbackCode HDCALLBACK hdBeginCB(void *data)
 {
@@ -442,77 +440,70 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 
 	// ROBA
 	// Prendo la pos corrente
-	hduMatrix device_transf_hd;
 	hdGetDoublev(HD_CURRENT_POSITION, device_pos);
-	hdGetDoublev(HD_CURRENT_TRANSFORM, device_transf_hd);
-
-	hduVector3Dd kk;
-	hdGetDoublev(HD_CURRENT_FORCE, kk);
+	device_transf.multMatrixDir(force, force_trans);
 
 	// Calculating dop
 	if(is_touched)
 	{
-
-		device_transf_hd.multMatrixDir(force, force_trans);
-		force_trans.normalize();
+		auto temp = device_transf.getInverse();
+		temp.multMatrixDir(contact_normal, temp_norm);
 
 		needle_vector = device_pos - device_contact_pos;
-
 		needle_PENETRATION = sqrt(needle_vector[0]*needle_vector[0] + 
 			needle_vector[1]*needle_vector[1] + 
 			needle_vector[2]*needle_vector[2]);
 
-		// needle_DOP = device_contact_pos[1] - device_pos[1];
+		needle_DOP = sqrt(needle_vector[0] * (-temp_norm[0]) + 
+			needle_vector[1] * (-temp_norm[1]) +
+			needle_vector[2] * (-temp_norm[2]));
 
-		// if (isnan(needle_DOP))
-		// 	needle_DOP = 0.0f;
+		if (isnan(needle_DOP))
+			needle_DOP = 0.0f;
 
-		// if (needle_DOP <= 0.0f)
-		// {
-		// 	is_touched = false;
-		// 	needle_PENETRATION = 0;
-		// 	cout << "***************\nNow outiside\n***************" << endl;
-		// }
-
-		if (is_touched && force[1] >= 0.0f)
+		if (needle_DOP <= 0.2f)
 		{
-			if (needle_DOP > 0.0f && needle_DOP < 0.1)
-			{
-				force[1] = 0.5f;
-				// force_trans = force_trans * 1.2f;
-			}
-			if (needle_DOP >= 0.1f && needle_DOP < 0.3f)
-			{
-				force[1] = 2.0f;
-				// force_trans = force_trans * 1.4f;
-			}
-			if (needle_DOP >= 0.3f && needle_DOP < 0.6f)
-			{
-				force[1] = 1.5f;
-				// force_trans = force_trans * 1.8f;
-			}
-			if (needle_DOP >= 0.6f)
-			{
-				force[1] = 1.0f;
-				// force_trans = force_trans * 1.3f;
-			}
+			is_touched = false;
+			needle_PENETRATION = 0;
+			cout << "***************\nNow outiside\n***************" << endl;
 		}
-
-		// force.normalize();
-		hdSetDoublev(HD_CURRENT_FORCE, force*(1.5f));
 	}
 
-	//! TUTTO QUI DENTRO IL RENDERING DI FORZA
+	// if (is_touched && force_trans[2] >= 0.0f)
+	// {
+	// 	if (needle_DOP > 0.0f && needle_DOP < 0.1)
+	// 	{
+	// 		force_trans[2] = 0.25f;
+	// 	}
+	// 	if (needle_DOP >= 0.1f && needle_DOP < 0.25f)
+	// 	{
+	// 		force_trans[2] = 0.40f;
+	// 	}
+	// 	if (needle_DOP >= 0.25f && needle_DOP < 0.6f)
+	// 	{
+	// 		force_trans[2] = 0.40f;
+	// 	}
+	// 	if (needle_DOP >= 0.6f)
+	// 	{
+	// 		force_trans[2] = 0.40f;
+	// 	}
+	// }
+
+
+	hduVector3Dd kk;
+	hdGetDoublev(HD_CURRENT_FORCE, kk);
+
+	hdSetDoublev(HD_CURRENT_FORCE, force_trans*f_scale);
 	if (count == 750)
 	{	
 		cout << "PROXY Position @ touch is: \t" << proxy_contact_pos << endl;
 		cout << "DEVICE Position @ touch is:\t" << device_contact_pos << endl;
+		cout << "PROXY Normal   @ touch is: \t" << contact_normal << endl;
 		cout << "DEVICE CURRENT POS         \t" << device_pos << endl;
 
-		cout << "HD_CURRENT_FORCE:    \t" << kk << endl;
-		cout << "Tranformed force is: \t" << force_trans << endl;
-		cout << "FORCE After imposing \t" << force << endl;
 		cout << "Needle Penetration:  \t" << needle_PENETRATION << endl;
+		cout << "Tranformed force is: \t" << force_trans << endl;
+		cout << "HD_CURRENT_FORCE:    \t" << kk << endl;
 		cout << "Depth of Penetration:\t" << needle_DOP << endl;
 		cout << "Needle vector:       \t" << needle_vector << endl;
 
@@ -759,8 +750,8 @@ void drawCursor()
 	}
 
 	//Get the depth of Penetration from HLAPI.
-	hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
-	glMultMatrixd(proxyxform);
+	// hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
+	// glMultMatrixd(proxyxform);
 
 
 	glTranslatef(0.0,0.0,cursorToToolTranslation);
@@ -811,38 +802,39 @@ void drawSceneHaptics()
 	//************** SHAPE 1: cube **************//
 	//! Here we have to modify those haptic params to 
 	//! model the wanted interactions (POPTHROUGH, constraints ..)
-	// if (!is_touched)
-	// {
+	if (!is_touched)
+	{
 		hlTouchModel(HL_CONTACT);
-		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.9f);
+		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.51f);
 		hlMaterialf(HL_FRONT, HL_DAMPING, 0.0f);
-		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0.9);
-		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION,0.9);
+		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0.1);
+		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION,0.1 );
 		// hlMaterialf(HL_FRONT, HL_POPTHROUGH, 0.3);
 		hlHinti(HL_SHAPE_FEEDBACK_BUFFER_VERTICES, cube_model->numvertices);
-		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, cube_id); //! FEEDBACK or DEPTH??
+		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, cube_id);
 
 		glPushMatrix();
 		glCallList(cube_obj_list);
 		glPopMatrix();
 		hlEndShape();
-	// }
+	}
 
-	// if (is_touched)
-	// {
-	// 	glPushMatrix();
-	// 	hlTouchModel(HL_CONSTRAINT);
 
-	// 	hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.2);
-	// 	hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0);
-	// 	hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0);
-	// 	hlTouchModelf(HL_SNAP_DISTANCE, 30);
-	// 	hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER,line_id);
-	// 	initLine();
-	// 	hlEndShape();
-	// 	glPopMatrix();
+	if (is_touched)
+	{
+		glPushMatrix();
+		hlTouchModel(HL_CONSTRAINT);
 
-	// }
+		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.2);
+		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0);
+		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0);
+		hlTouchModelf(HL_SNAP_DISTANCE, 30);
+		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER,line_id);
+		initLine();
+		hlEndShape();
+		glPopMatrix();
+
+	}
 
 	// if (is_touched)
 	// {

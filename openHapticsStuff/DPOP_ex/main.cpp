@@ -241,9 +241,9 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
         //     force[2] = 0.5;
 
         if (probeDop > 0.0 && probeDop < 0.2)
-            force_trans[2] = 0.25;
+            force_trans[2] = 1.0;
         else if (probeDop >= 0.2 && probeDop < 4)
-            force_trans[2] = 0.4;
+            force_trans[2] = 2;
 
         // hdSetDoublev(HD_CURRENT_FORCE, force*forceScaler);
         hdSetDoublev(HD_CURRENT_FORCE, force_trans*forceScaler);
