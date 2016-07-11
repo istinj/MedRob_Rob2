@@ -90,10 +90,9 @@ hduVector3Dd force_trans(0.0f,0.0f,0.0f);
 hduVector3Dd device_pos(0.0f, 0.0f, 0.0f);
 hduVector3Dd needle_vector(0.0f, 0.0f, 0.0f);
 hduVector3Dd device_contact_pos(0.0f, 0.0f, 0.0f);
-hduVector3Dd dir(0.0f, 0.0f, 0.0f);
+hduVector3Dd desired_direction(0.0f, 0.0f, 0.0f);
 
 HDdouble needle_DOP = 0.0f;
-HDdouble needle_PENETRATION = 0.0f;
 
 static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
 hduMatrix device_transf;
@@ -101,8 +100,8 @@ hduMatrix cube_transf;
 
 double f_scale = 1.0f;
 int count = 0;
-
-
+double old_needle_DOP = 0.0f;
+double needle_DOP_difference = 0.0f;
 
 // *************************************************** //
 // ************ FUNCTIONS PROTOTYPES ***************** //
@@ -304,7 +303,7 @@ void initScene()
 void initLine()
 {
 	line_list = glGenLists(1);
-	auto temp = dir * 5;
+	auto temp = desired_direction * 5;
 
 	glNewList(line_list, GL_COMPILE_AND_EXECUTE);
 	glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT);
@@ -389,7 +388,7 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 	HLcache *cache,
 	void *userdata)
 {
-	// cout << "HO TOCCATO" << endl;
+	//cout << "\n***************************\n*******SONO DENTRO!!*********\n****************************\n" << endl;
 	is_touched = true;
 
 	device_contact_pos = device_pos;
@@ -398,10 +397,10 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 	hlGetDoublev(HL_DEVICE_TRANSFORM, device_transf);
 
 	// Line drawing
-	dir = hduVector3Dd(0.0f, 0.0f, 1.0f);
+	desired_direction = hduVector3Dd(0.0f, 0.0f, 1.0f);
 	auto temp = device_transf.getInverse();
-	temp.multMatrixDir(dir,dir);
-	dir = (-1) * dir;
+	temp.multMatrixDir(desired_direction,desired_direction);
+	desired_direction = (-1) * desired_direction;
 }
 
 void HLCALLBACK hlUntouchCubeCB(HLenum event,
@@ -456,12 +455,17 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 	//***********************************************************************************
 	//**************************************CODICE NUOVO*********************************
 	//***********************************************************************************
-	double tissue_height[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-	double stiffness[4] = {1.0f, 2.0f, 3.0f, 10.f};
-	double damping[3] = {1.0f, 1.2f, 1.3f};
+	double tissue_height[4] = {0.0f, 30.0f, 60.0f, 90.0f};
+	double stiffness[4] = {331.0f, 83.0f, 497.0f, 2483.f};
+	double damping[3] = {3.0f, 1.0f, 3.0f};
 	bool puncture[3] = {0, 0, 0}; 
-	hduVector3Dd max_reaction_force_vector(1.0f, 2.0f, 3.0f);
 	hduVector3Dd needle_penetration(0.0f, 0.0f, 0.0f);
+	hduVector3Dd total_force(0.0f,0.0f,0.0f);
+
+	hduVector3Dd max_reaction_force_vector(0.0f, 0.0f, 0.0f);
+	max_reaction_force_vector[0] = stiffness[0]*(tissue_height[1]-tissue_height[0])/2;
+	max_reaction_force_vector[1] = stiffness[1]*(tissue_height[2]-tissue_height[1])/2;
+	max_reaction_force_vector[2] = stiffness[2]*(tissue_height[3]-tissue_height[2])/2;
 
 
 	//Leggi la posizione corrente del tip (dev coords)
@@ -488,241 +492,252 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 		total_needle_penetration = needle_vector.magnitude();
 
 		//Calcola il vettore needle_penetration_vector //! non serve tutto sto casino... basta mantenere total needle penetration e ultimo_tessuto_needle_penetration
-		hduVector3Dd needle_penetration_vector(0.0f,0.0f,0.0f);
+		HDdouble needle_penetration = 0.0f;
 
 		if(tissue_height[0] <= needle_DOP && needle_DOP < tissue_height[1])
 		{
-			needle_penetration_vector[2]=0;
-			needle_penetration_vector[1]=0;
-			needle_penetration_vector[0]=total_needle_penetration;
+			needle_penetration=total_needle_penetration;
 		}
 		else if(tissue_height[1] <= needle_DOP && needle_DOP < tissue_height[2])
 		{
-			HDdouble needle_DOP_fat = needle_DOP - tissue_height[1];				
-			needle_penetration_vector[2] = 0;
-			needle_penetration_vector[1] = (needle_DOP_fat / needle_DOP) * total_needle_penetration;
-			needle_penetration_vector[0] = total_needle_penetration - needle_penetration_vector[1];
+			HDdouble needle_DOP_fat = needle_DOP - tissue_height[1];	
+			needle_penetration = (needle_DOP_fat / needle_DOP) * total_needle_penetration;
 		}
 
 		else if(tissue_height[2] <= needle_DOP && needle_DOP < tissue_height[3])
 		{
 			HDdouble needle_DOP_fat = needle_DOP - tissue_height[1];
 			HDdouble needle_DOP_muscle = needle_DOP - tissue_height[2];
-			needle_penetration_vector[2] = (needle_DOP_muscle / needle_DOP) * total_needle_penetration;
-			needle_penetration_vector[1] = (needle_DOP_fat / needle_DOP_muscle) * needle_penetration_vector[2];
-			needle_penetration_vector[0] = total_needle_penetration - needle_penetration_vector[2] - needle_penetration_vector[1];
+			needle_penetration = (needle_DOP_muscle / needle_DOP) * total_needle_penetration;
 		}
+
 
 		//Controlli sulla DOP
 		if (_isnan(needle_DOP))
 		{
-			needle_DOP = -5.0f;
+			needle_DOP = -1.0f;
 			cout << "***dice che era NAN***" << endl;
 		}
 
+		//ESCI DAL TESSUTO se la DOP è < 0 e la velocità è rivolta verso l'alto
 		if (needle_DOP <= 0.0f && needle_velocity_vector[1]>0)
 		{
-			cout <<"needle_DOP:\t"<<needle_DOP << endl;
 			is_touched = false;
 			total_needle_penetration = 0;
 			puncture[0] = 0.0f;
 			puncture[1] = 0.0f;
 			puncture[2] = 0.0f;
-			cout << "***************\nNow outside\n***************" << endl;
+			//cout <<"needle_DOP:\t"<<needle_DOP << endl;
+			//cout <<"needle_velocity:\t"<<needle_velocity_vector[1] << endl;
+			//cout << "***************\nSONO FUORI!!\n***************" << endl;
 		}
+
+		needle_DOP_difference = abs(old_needle_DOP - needle_DOP);
+		
+		if(needle_DOP_difference > 10){
+			cout << "**********************************************" << endl;
+			cout << "DIFFERENZA DI DOP = " << needle_DOP_difference << endl;
+			cout << "needle_DOP = " << needle_DOP << endl;
+			cout << "device_contact_pos = " << device_contact_pos[1] << endl;
+			cout << "device_pos = " << device_pos[1] << endl;
+			cout << "**********************************************" << endl;
+			needle_DOP = old_needle_DOP;
+		}
+
+		old_needle_DOP = needle_DOP;
+
 
 		//Calcola reaction_force_direction
 		hduVector3Dd reaction_force_direction(-needle_vector);
 		reaction_force_direction.normalize();
 
 
-
-
-
-
-
 		//Calcola la magnitude della forza di reazione 
 		HDdouble reaction_force_magnitude = 0.0f;
 
-		////In base allo strato in cui ti trovi (DOP) cambiano i coefficienti
-		// if(tissue_height[0] <= needle_DOP && needle_DOP < tissue_height[1])
-		// {
-		//	 //metti a 0 le puncture di tutti gli strati seguenti
-		//	 puncture[1] = 0;
-		//	 puncture[2] = 0;
+		int level = 0;
 
-		//	 //calcola la forza statica
-		//	 reaction_force_magnitude = stiffness[0]*needle_penetration_vector[0];
+		//In base allo strato in cui ti trovi (DOP) cambiano i coefficienti
+		 if(tissue_height[0] <= needle_DOP && needle_DOP < tissue_height[1])
+		 {
+			 level = 1;
+			 //metti a 0 le puncture di tutti gli strati seguenti
+			 puncture[1] = 0;
+			 puncture[2] = 0;
 
-		//	 //se la forza statica è > FstaticaMassima, se hai superato la metà del tessuto o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
-		//	 if(puncture[0] == 1 || reaction_force_magnitude > max_reaction_force_vector[0] || needle_DOP >= (tissue_height[1]-tissue_height[0])/2 ){
-		//		reaction_force_magnitude = damping[0] * needle_penetration_vector[0] * needle_velocity_magnitude;
-		//		puncture[0] = 1;
-		//	 }
-		// }
-		// else if(tissue_height[1] <= needle_DOP && needle_DOP < tissue_height[2])
-		// {
-		//	 //metti a 0 le puncture di tutti gli strati seguenti
-		//	 puncture[2] = 0;
+			 //calcola la forza statica
+			 reaction_force_magnitude = stiffness[0]*needle_penetration;
 
-		//	 //calcola la forza statica
-		//	 reaction_force_magnitude = stiffness[1]*needle_penetration_vector[1] + 
-		//								damping[0] * (tissue_height[1]-tissue_height[0]) * needle_velocity_magnitude;
+			 //se la forza statica è > FstaticaMassima, se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
+			 if(puncture[0] == 1 || reaction_force_magnitude > max_reaction_force_vector[0] ){
+				reaction_force_magnitude = damping[0] * needle_penetration * needle_velocity_magnitude;
+				puncture[0] = 1;
+			 }
 
-		//	 //se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
-		//	 if(puncture[1] == 1 || reaction_force_magnitude > max_reaction_force_vector[1] || needle_DOP >= (tissue_height[2]-tissue_height[1])/2 ){
-		//		reaction_force_magnitude = (damping[0] * (tissue_height[1]-tissue_height[0]) +
-		//									damping[1] * needle_penetration_vector[1]) * needle_velocity_magnitude;
-		//		puncture[1] = 1;
-		//	 }
-		// }
-		// else if(tissue_height[2] <= needle_DOP && needle_DOP < tissue_height[3])
-		// {
-		//	 //calcola la forza statica
-		//	 reaction_force_magnitude = stiffness[2]*needle_penetration_vector[2] + 
-		//								( damping[0] * (tissue_height[1]-tissue_height[0]) +
-		//								  damping[1] * (tissue_height[1]-tissue_height[1])) * needle_velocity_magnitude;
+			 reaction_force_magnitude = 0.4;
+		 }
+		 else if(tissue_height[1] <= needle_DOP && needle_DOP < tissue_height[2])
+		 {
+			 level = 2;
+			 //metti a 0 le puncture di tutti gli strati seguenti
+			 puncture[2] = 0;
 
-		//	 //se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
-		//	 if(puncture[2] == 1 || reaction_force_magnitude > max_reaction_force_vector[2] || needle_DOP >= (tissue_height[3]-tissue_height[2])/2 ){
-		//		reaction_force_magnitude = (damping[0] * (tissue_height[1]-tissue_height[0]) +
-		//									damping[1] * (tissue_height[2]-tissue_height[1]) +
-		//									damping[2] * needle_penetration_vector[2] ) * needle_velocity_magnitude;
-		//		puncture[2] = 1;
-		//	 }
-		// }
-		// else if(needle_DOP >= tissue_height[3])
-		// {
-		//	 //se stai toccando l'osso setta la forza statica
-		//	 reaction_force_magnitude = stiffness[3] * total_needle_penetration +
-		//								( damping[0] * (tissue_height[1]-tissue_height[0]) +
-		//								  damping[1] * (tissue_height[2]-tissue_height[1]) +
-		//								  damping[2] * (tissue_height[3]-tissue_height[2]) ) * needle_velocity_magnitude;
-		// }
+			 //calcola la forza statica
+			 reaction_force_magnitude = stiffness[1]*needle_penetration + 
+										damping[0] * (tissue_height[1]-tissue_height[0]) * needle_velocity_magnitude;
 
+			 //se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
+			 if(puncture[1] == 1 || reaction_force_magnitude > max_reaction_force_vector[1] ){
+				reaction_force_magnitude = (damping[0] * (tissue_height[1]-tissue_height[0]) +
+											damping[1] * needle_penetration) * needle_velocity_magnitude;
+				puncture[1] = 1;
+			 }
+
+			 reaction_force_magnitude = 1.5;
+		 }
+		 else if(tissue_height[2] <= needle_DOP && needle_DOP < tissue_height[3])
+		 {
+			 level = 3;
+			 //calcola la forza statica
+			 reaction_force_magnitude = stiffness[2]*needle_penetration + 
+										( damping[0] * (tissue_height[1]-tissue_height[0]) +
+										  damping[1] * (tissue_height[2]-tissue_height[1])) * needle_velocity_magnitude;
+
+			 //se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
+			 if(puncture[2] == 1 || reaction_force_magnitude > max_reaction_force_vector[2] ){
+				reaction_force_magnitude = (damping[0] * (tissue_height[1]-tissue_height[0]) +
+											damping[1] * (tissue_height[2]-tissue_height[1]) +
+											damping[2] * needle_penetration ) * needle_velocity_magnitude;
+				puncture[2] = 1;
+			 }
+
+			 reaction_force_magnitude = 2;
+		 }
+		 else if(needle_DOP >= tissue_height[3])
+		 {
+			 level = 4;
+			 //se stai toccando l'osso setta la forza statica
+			 reaction_force_magnitude = stiffness[3] * total_needle_penetration +
+										( damping[0] * (tissue_height[1]-tissue_height[0]) +
+										  damping[1] * (tissue_height[2]-tissue_height[1]) +
+										  damping[2] * (tissue_height[3]-tissue_height[2]) ) * needle_velocity_magnitude;
+
+			 reaction_force_magnitude = 2.5;
+		 }
 
 
 		//placeholder
-		reaction_force_magnitude = 0.020f;
+		//reaction_force_magnitude = 0.20f;
 
-		//Calcola forza di reazione completa
+		//Calcola forza di reazione 
 		hduVector3Dd reaction_force(0.0f,0.0f,0.0f);
-		reaction_force = reaction_force_magnitude * reaction_force_direction;
+		reaction_force = reaction_force_magnitude * (-desired_direction);
+
+
+
+
+		//Calcola forza di richiamo sulla linea
+
+		//FORZA ELASTICA DI RICHIAMO
+		//hduVector3Dd elastic_force(0.0f,0.0f,0.0f);
+		//hduVector3Dd elastic_force_direction(0.0f,0.0f,0.0f);
+		//HDdouble elastic_force_magnitude = 0.0f;
+		//HDdouble displacement = 0.0f;
+		//HDdouble projected_needle_velocity = 0.0f;
+		//double elastic_force_stiffness = 0.5f;
+		//double elastic_force_damping = 0.0f;
+
+		//hduVector3Dd norm_desired_direction = desired_direction;
+		//norm_desired_direction.normalize();
+
+		//HDdouble projection_length = needle_vector.dotProduct( norm_desired_direction);
+
+		//hduVector3Dd projection_vector(0.0f,0.0f,0.0f);
+		//projection_vector = norm_desired_direction * projection_length;
+
+		//displacement = sqrt( pow( needle_vector.magnitude(), 2.0) - pow( projection_length, 2.0));
+		//elastic_force_magnitude = elastic_force_stiffness * displacement;
+
+		//elastic_force_direction = (projection_vector - needle_vector);
+		//elastic_force_direction.normalize();
+
+		//projected_needle_velocity = needle_velocity_vector.dotProduct(elastic_force_direction);
+		//
+		//elastic_force = (elastic_force_magnitude - elastic_force_damping * projected_needle_velocity) * elastic_force_direction;
+
+		////Attenua la forza elastica se sei a meno di 3 mm dall'asse desiderato
+		//if(displacement  < 3)
+		//{
+		//	elastic_force = elastic_force * displacement/3;
+		//}
+
+
+
+		////Rescaling and Clamping della reaction force
+		//reaction_force_magnitude = reaction_force.magnitude();
+		//reaction_force_direction = reaction_force;
+		//reaction_force_direction.normalize();
+
+		//reaction_force_magnitude = reaction_force_magnitude*2.5/30000;
+		//if(reaction_force_magnitude > 2.6)
+		//	reaction_force_magnitude = 2.6;
+		//reaction_force = reaction_force_magnitude * reaction_force_direction;
+
+
+
+
+		//FORZA DI ATTRITO SPAZIALE
+		hduVector3Dd damping_force(0.0f,0.0f,0.0f);
+		hduVector3Dd damping_force_direction(0.0f,0.0f,0.0f);
+		HDdouble damping_force_magnitude= 0.0f;
+		double damping_coeff = 0.5;
+
+		damping_force_direction = -needle_velocity_vector;
+		damping_force_direction.normalize();
+
+		damping_force_magnitude = needle_velocity_magnitude * damping_coeff;
+
+		damping_force = damping_force_magnitude * damping_force_direction;
+
+		hduVector3Dd norm_desired_direction = desired_direction;
+		norm_desired_direction.normalize();
+
+		auto projected_damping_force_magnitude = damping_force.dotProduct(norm_desired_direction);
+		auto projected_damping_force = projected_damping_force_magnitude * norm_desired_direction;
+		
+		damping_force = damping_force - projected_damping_force;
+
+
+
+		//Calcola forza totale
+		total_force = reaction_force*0 + damping_force/100;
+
+		
+
+
 
 		//Imponi la forza di reazione al tip
-		hdSetDoublev(HD_CURRENT_FORCE, reaction_force*1.0);
+		hdSetDoublev(HD_CURRENT_FORCE, total_force*1.0);
 
 
+		HDdouble max_force=0.0f;
+		hdGetDoublev(HD_NOMINAL_MAX_FORCE, &max_force);
 
-		//! TUTTO QUI DENTRO IL RENDERING DI FORZA
+		// STAMPA TEMPORIZZATA
 		if (count == 750)
 		{	
 			//cout << "NEEDLE VELOCITY:\t" << needle_velocity_vector[1] << endl;
-			
+			cout << "total force = " << total_force.magnitude() << endl; 
+			cout << "damping force = " << damping_force_magnitude << endl; 
+			//cout << "MAX FORCE = " << max_force << endl; 
+			cout << "livello =" << level << endl;
+
 
 			count = 0;
 		}
 		count++;
 
-
 	}
-
-
-
-
-
-
-
-
-	//***********************************************************************************
-	//**************************************CODICE VECCHIO*********************************
-	//***********************************************************************************
-	//hdGetDoublev(HD_CURRENT_FORCE, force);
-
-	//// ROBA
-	//// Prendo la pos corrente
-	//hduMatrix device_transf_hd;
-	//hdGetDoublev(HD_CURRENT_POSITION, device_pos);
-	//hdGetDoublev(HD_CURRENT_TRANSFORM, device_transf_hd);
-
-	//hduVector3Dd kk;
-	//hdGetDoublev(HD_CURRENT_FORCE, kk);
-
-	//// Calculating dop
-	//if(is_touched)
-	//{
-
-	//	device_transf_hd.multMatrixDir(force, force_trans);
-	//	force_trans.normalize();
-
-	//	needle_vector = device_pos - device_contact_pos;
-
-	//	needle_PENETRATION = sqrt(needle_vector[0]*needle_vector[0] + 
-	//		needle_vector[1]*needle_vector[1] + 
-	//		needle_vector[2]*needle_vector[2]);
-
-	//	// needle_DOP = device_contact_pos[1] - device_pos[1];
-
-	//	// if (isnan(needle_DOP))
-	//	// 	needle_DOP = 0.0f;
-
-	//	// if (needle_DOP <= 0.0f)
-	//	// {
-	//	// 	is_touched = false;
-	//	// 	needle_PENETRATION = 0;
-	//	// 	cout << "***************\nNow outiside\n***************" << endl;
-	//	// }
-
-	//	if (is_touched && force[1] >= 0.0f)
-	//	{
-	//		if (needle_DOP > 0.0f && needle_DOP < 0.1)
-	//		{
-	//			force[1] = 0.5f;
-	//			// force_trans = force_trans * 1.2f;
-	//		}
-	//		if (needle_DOP >= 0.1f && needle_DOP < 0.3f)
-	//		{
-	//			force[1] = 2.0f;
-	//			// force_trans = force_trans * 1.4f;
-	//		}
-	//		if (needle_DOP >= 0.3f && needle_DOP < 0.6f)
-	//		{
-	//			force[1] = 1.5f;
-	//			// force_trans = force_trans * 1.8f;
-	//		}
-	//		if (needle_DOP >= 0.6f)
-	//		{
-	//			force[1] = 1.0f;
-	//			// force_trans = force_trans * 1.3f;
-	//		}
-	//	}
-
-	//	// force.normalize();
-	//	hdSetDoublev(HD_CURRENT_FORCE, force*(1.5f));
-	//}
-
-	////! TUTTO QUI DENTRO IL RENDERING DI FORZA
-	//if (count == 750)
-	//{	
-	//	cout << "PROXY Position @ touch is: \t" << proxy_contact_pos << endl;
-	//	cout << "DEVICE Position @ touch is:\t" << device_contact_pos << endl;
-	//	cout << "DEVICE CURRENT POS         \t" << device_pos << endl;
-
-	//	cout << "HD_CURRENT_FORCE:    \t" << kk << endl;
-	//	cout << "Tranformed force is: \t" << force_trans << endl;
-	//	cout << "FORCE After imposing \t" << force << endl;
-	//	cout << "Needle Penetration:  \t" << needle_PENETRATION << endl;
-	//	cout << "Depth of Penetration:\t" << needle_DOP << endl;
-	//	cout << "Needle vector:       \t" << needle_vector << endl;
-
-	//	cout << "*********************************************" << endl << endl;
-
-	//	count = 0;
-	//}
-	//count++;
-	//***********************************************************************************
-	//***********************************************************************************
-	//***********************************************************************************
 
 
 
@@ -956,6 +971,7 @@ void drawCursor()
 	// Get the proxy transform in world coordinates.
 	hlGetDoublev(HL_PROXY_TRANSFORM, proxyxform);
 	//If entered hole, then freeze the rotations of the needle to the one at the contact
+	
 	if (is_touched)
 	{
 		for (int i = 0; i < 3; i++)
@@ -965,10 +981,16 @@ void drawCursor()
 				proxyxform(i,j) = device_transf(i,j);
 			}
 		}
+		auto y_contact_point = proxy_contact_pos[1];
+		auto y_curr = proxyxform(3,1);
+
+		proxyxform(3,0) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[0]) + proxy_contact_pos[0];
+		proxyxform(3,2) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[2]) + proxy_contact_pos[2];
+
 	}
 
 	//Get the depth of Penetration from HLAPI.
-	hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
+	//hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
 	glMultMatrixd(proxyxform);
 
 
@@ -1040,20 +1062,16 @@ void drawSceneHaptics()
 
 	if (is_touched)
 	{
-
-		// cout << "*************\n SONO DENTRO \n *********************" << endl;
 		glPushMatrix();
-		hlTouchModel(HL_CONSTRAINT);
-
-		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.99);
-		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0);
-		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0);
-		hlTouchModelf(HL_SNAP_DISTANCE, 300);
+		/*hlTouchModel(HL_CONSTRAINT);
+		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.9);
+		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0.0);
+		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0.0);*/
+		//hlTouchModelf(HL_SNAP_DISTANCE, 300);
 		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER,line_id);
 		initLine();
 		hlEndShape();
 		glPopMatrix();
-
 	}
 
 	// if (is_touched)
