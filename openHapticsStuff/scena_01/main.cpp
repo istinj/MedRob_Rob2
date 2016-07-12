@@ -98,6 +98,10 @@ hduVector3Dd push_proxy_position(0.0f,0.0f,0.0f);
 
 hduVector3Dd delta_pos;
 
+HDdouble delta_T = 0;
+hduVector3Dd average_vel(0.0f,0.0f,0.0f);
+int global_porcodio = 0;
+
 
 double tissue_height[4] = {0.0f, 30.0f, 60.0f, 90.0f};
 double stiffness[4] = {331.0f, 83.0f, 497.0f, 2483.f};
@@ -550,9 +554,9 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 	HDdouble needle_velocity_magnitude = needle_velocity_vector.magnitude();
 
 	//! INTEGRATION
-	auto delta_T = hdGetSchedulerTimeStamp();
-	delta_pos = needle_velocity_vector * delta_T;
-
+	delta_T += hdGetSchedulerTimeStamp();
+	average_vel += needle_velocity_vector;
+	global_porcodio++;
 
 
 	if(is_touched){
@@ -998,8 +1002,13 @@ void drawCursor()
 	glPushMatrix();
 
 	//! INTEGRATION
+	average_vel /= global_porcodio;
+	delta_pos = average_vel * delta_T;
 	auto new_pos = proxyPos + delta_pos;
 	hlProxydv(HL_PROXY_POSITION, new_pos);
+	global_porcodio = 0;
+	average_vel = hduVector3Dd(0.0,0.0,0.0);
+	delta_T = 0.0f;
 
 
 	if (!gCursorDisplayList)
