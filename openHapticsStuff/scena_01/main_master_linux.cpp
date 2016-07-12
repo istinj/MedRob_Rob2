@@ -4,29 +4,22 @@
 #include <assert.h>
 #include <stack>
 
-#if defined(WIN32)
-#include <conio.h>
-#include <windows.h>
-#endif
-
-#if defined(linux)
+// only Linux platform
 #include <ncurses.h>
 #define _getch getch
-#endif
 
-#if defined(WIN32) || defined(linux)
+// OpenGL include
 #include <GL/glut.h>
-#elif defined(__APPLE__)
-#include <GLUT/glut.h>
-#endif
 
+// Include OpenHaptics HL
 #include <HL/hl.h>
 #include <HDU/hduMatrix.h>
 #include <HDU/hduError.h>
 #include <HDU/hduMath.h>
 #include <HDU/hduBoundBox.h>
-
 #include <HLU/hlu.h>
+
+// Including library to handle OBJ models
 #include "GLM.h"
 
 using namespace std;
@@ -61,9 +54,11 @@ GLuint needle_obj_list;
 GLuint line_list;
 
 // Declaring haptic device 
+//! Later it will be initialize by a proper function (initHL)
 static HHD ghHD = HD_INVALID_HANDLE;
 
 // Declaring rendering context
+//! Later initialized by hlCreateContext
 static HHLRC ghHLRC = 0;
 
 // Shape id declaration
@@ -87,42 +82,18 @@ hduVector3Dd force_trans(0.0f,0.0f,0.0f);
 hduVector3Dd device_pos(0.0f, 0.0f, 0.0f);
 hduVector3Dd needle_vector(0.0f, 0.0f, 0.0f);
 hduVector3Dd device_contact_pos(0.0f, 0.0f, 0.0f);
-hduVector3Dd desired_direction(0.0f, 0.0f, 0.0f);
-
-hduVector3Dd needle_penetration(0.0f, 0.0f, 0.0f);
-hduVector3Dd total_force(0.0f,0.0f,0.0f);
-hduVector3Dd max_reaction_force_vector(0.0f, 0.0f, 0.0f);
-hduVector3Dd damping_force(0.0f,0.0f,0.0f);
-hduVector3Dd damping_force_direction(0.0f,0.0f,0.0f);
-hduVector3Dd push_proxy_position(0.0f,0.0f,0.0f);
-
-hduVector3Dd delta_pos;
-
-
-double tissue_height[4] = {0.0f, 30.0f, 60.0f, 90.0f};
-double stiffness[4] = {331.0f, 83.0f, 497.0f, 2483.f};
-double damping[3] = {3.0f, 1.0f, 3.0f};
-bool puncture[3] = {0, 0, 0}; 
+hduVector3Dd dir(0.0f, 0.0f, 0.0f);
 
 HDdouble needle_DOP = 0.0f;
-HDint current_button = 0;
+HDdouble needle_PENETRATION = 0.0f;
 
 static hduVector3Dd proxy_contact_pos(0.0,0.0,0.0); //! Those must be generated in hlTouchCubeCB
 hduMatrix device_transf;
-hduMatrix button_down_transform;
-hduMatrix button_up_transform;
-hduMatrix global_transform_matrix;
-hduMatrix current_device_transform;
 hduMatrix cube_transf;
-hduMatrix temp_transform;
 
-bool flag_release = false;
 double f_scale = 1.0f;
 int count = 0;
-double old_needle_DOP = 0.0f;
-double needle_DOP_difference = 0.0f;
 
-int jj = 0;
 
 
 // *************************************************** //
@@ -156,35 +127,25 @@ void DrawBitmapString(GLfloat x, GLfloat y, void *font, char *format,...);
 
 // Declaring callbacks' 
 void HLCALLBACK hlTouchCubeCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata);
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata);
 void HLCALLBACK hlUntouchCubeCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata);
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata);
 void HLCALLBACK hlNeedleMotionCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata);
-
-void HLCALLBACK hlPushButtonCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata);
-void HLCALLBACK hlReleaseButtonCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata);
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata);
 
 // Main HD callbacks
 HDCallbackCode HDCALLBACK hdBeginCB(void *data);
 HDCallbackCode HDCALLBACK hdEndCB(void *data);
+
 
 
 
@@ -219,6 +180,9 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+
+
+
 // *************************************************** //
 // ******************** FUNCTIONS  ******************* //
 // *************************************************** //
@@ -237,9 +201,15 @@ void initHL()
 		exit(-1);
 	}
 
+	/*************************************************************
+	ADDED
+	*************************************************************/
 	hdScheduleAsynchronous(hdBeginCB, 0, HD_MAX_SCHEDULER_PRIORITY);
 	hdScheduleAsynchronous(hdEndCB, 0, HD_MIN_SCHEDULER_PRIORITY);
 
+	/*************************************************************
+	END ADDED
+	*************************************************************/
 	ghHLRC = hlCreateContext(ghHD);
 	hlMakeCurrent(ghHLRC);
 
@@ -254,47 +224,21 @@ void initHL()
 	needle_id = hlGenShapes(1);
 	hlTouchableFace(HL_FRONT);
 
+	//! TO DO: Generate shape ID, add callbacks (hlAddEventCallback)
 	hlAddEventCallback(HL_EVENT_TOUCH, 
-		cube_id,
-		HL_COLLISION_THREAD,
-		hlTouchCubeCB, 0);
+			cube_id,
+			HL_COLLISION_THREAD,
+			hlTouchCubeCB, 0);
 	hlAddEventCallback(HL_EVENT_UNTOUCH, 
-		cube_id,
-		HL_COLLISION_THREAD,
-		hlUntouchCubeCB, 0);
-	// // MOTION
-	// hlAddEventCallback(HL_EVENT_MOTION,
-	// 	HL_OBJECT_ANY,
-	// 	HL_COLLISION_THREAD,
-	// 	hlNeedleMotionCB,NULL);
+			cube_id,
+			HL_COLLISION_THREAD,
+			hlUntouchCubeCB, 0);
 
-	// BUTTON1
-	hlAddEventCallback(HL_EVENT_1BUTTONUP,
-		HL_OBJECT_ANY,
-		HL_COLLISION_THREAD,
-		&hlReleaseButtonCB, NULL);
-	hlAddEventCallback(HL_EVENT_1BUTTONDOWN,
-		HL_OBJECT_ANY,
-		HL_COLLISION_THREAD,
-		&hlPushButtonCB, NULL);
-	// BUTTON2
-	hlAddEventCallback(HL_EVENT_2BUTTONUP,
-		HL_OBJECT_ANY,
-		HL_COLLISION_THREAD,
-		&hlReleaseButtonCB, NULL);
-	hlAddEventCallback(HL_EVENT_2BUTTONDOWN,
-		HL_OBJECT_ANY,
-		HL_COLLISION_THREAD,
-		&hlPushButtonCB, NULL);
-	// BUTTON3
-	hlAddEventCallback(HL_EVENT_3BUTTONUP,
-		HL_OBJECT_ANY,
-		HL_COLLISION_THREAD,
-		&hlReleaseButtonCB, NULL);
-	hlAddEventCallback(HL_EVENT_3BUTTONDOWN,
-		HL_OBJECT_ANY,
-		HL_COLLISION_THREAD,
-		&hlPushButtonCB, NULL);
+	// MOTION
+	hlAddEventCallback(HL_EVENT_MOTION,
+			needle_id,
+			HL_COLLISION_THREAD,
+			hlNeedleMotionCB,0);
 }
 
 
@@ -352,7 +296,7 @@ void initScene()
 void initLine()
 {
 	line_list = glGenLists(1);
-	auto temp = desired_direction * 5;
+	auto temp = dir * 5;
 
 	glNewList(line_list, GL_COMPILE_AND_EXECUTE);
 	glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT);
@@ -432,10 +376,10 @@ void initNeedle()
 // *************************************
 // Haptic callbacks
 void HLCALLBACK hlTouchCubeCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata)
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata)
 {
 	is_touched = true;
 
@@ -444,69 +388,29 @@ void HLCALLBACK hlTouchCubeCB(HLenum event,
 	hlGetDoublev(HL_PROXY_TOUCH_NORMAL, contact_normal);
 	hlGetDoublev(HL_DEVICE_TRANSFORM, device_transf);
 
-	// device_transf = device_transf * global_transform_matrix;
-
 	// Line drawing
-	desired_direction = hduVector3Dd(0.0f, 0.0f, 1.0f);
+	dir = hduVector3Dd(0.0f, 0.0f, 1.0f);
 	auto temp = device_transf.getInverse();
-	temp.multMatrixDir(desired_direction,desired_direction);
-	desired_direction = (-1) * desired_direction;
+	temp.multMatrixDir(dir,dir);
+	dir = (-1) * dir;
 }
 
 void HLCALLBACK hlUntouchCubeCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata)
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata)
 {
-	/*is_touched = false;
-	puncture[0] = 0.0f;
-	puncture[1] = 0.0f;
-	puncture[2] = 0.0f;*/
+	is_touched = false;
 }
 
 void HLCALLBACK hlNeedleMotionCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata)
+		HLuint object, 
+		HLenum thread,
+		HLcache *cache,
+		void *userdata)
 {
-	cout << "Motion ...." << endl;
-}
-
-
-void HLCALLBACK hlPushButtonCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata)
-{
-	cout << "Button " << current_button << " pressed!" << endl;
-	hlGetDoublev(HL_DEVICE_TRANSFORM, button_down_transform);
-	hlGetDoublev(HL_PROXY_POSITION, push_proxy_position);
-
-	hlDisable(HL_PROXY_RESOLUTION);
-}
-
-void HLCALLBACK hlReleaseButtonCB(HLenum event,
-	HLuint object, 
-	HLenum thread,
-	HLcache *cache,
-	void *userdata)
-{
-	flag_release = true;
-	hlEnable(HL_PROXY_RESOLUTION);
-
-	cout << "Button " << current_button << " released!" << endl;
-	// hlDisable(HL_PROXY_RESOLUTION);
-	// hlProxydv(HL_PROXY_POSITION, push_proxy_position);
-	// hlEnable(HL_PROXY_RESOLUTION);
-
-	// hlGetDoublev(HL_DEVICE_TRANSFORM, button_up_transform);
-	// auto button_up_transform_inverse = button_up_transform.getInverse();
-	// global_transform_matrix = button_up_transform_inverse * 
-	// 						button_down_transform * 
-	// 						global_transform_matrix;
+	// Placeholder.
 }
 
 
@@ -534,264 +438,89 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 	static const HDdouble kImpulseLimit = 0.001;
 	hdSetDoublev(HD_SOFTWARE_FORCE_IMPULSE_LIMIT,&kImpulseLimit);
 	hdSetDoublev(HD_FORCE_RAMPING_RATE, &kRampUpRate );
+	hdGetDoublev(HD_CURRENT_FORCE, force);
 
-	max_reaction_force_vector[0] = stiffness[0]*(tissue_height[1]-tissue_height[0])/2;
-	max_reaction_force_vector[1] = stiffness[1]*(tissue_height[2]-tissue_height[1])/2;
-	max_reaction_force_vector[2] = stiffness[2]*(tissue_height[3]-tissue_height[2])/2;
-
-	hdGetIntegerv(HD_CURRENT_BUTTONS, &current_button);
-
-	//Leggi la posizione corrente del tip (dev coords)
+	// ROBA
+	// Prendo la pos corrente
+	hduMatrix device_transf_hd;
 	hdGetDoublev(HD_CURRENT_POSITION, device_pos);
+	hdGetDoublev(HD_CURRENT_TRANSFORM, device_transf_hd);
 
-	//Leggi la velocità del tip (dev coords?)
-	hduVector3Dd needle_velocity_vector(0.0f, 0.0f, 0.0f);
-	hdGetDoublev(HD_CURRENT_VELOCITY, needle_velocity_vector);
-	HDdouble needle_velocity_magnitude = needle_velocity_vector.magnitude();
+	hduVector3Dd kk;
+	hdGetDoublev(HD_CURRENT_FORCE, kk);
 
-	//! INTEGRATION
-	auto delta_T = hdGetSchedulerTimeStamp();
-	delta_pos = needle_velocity_vector * delta_T;
+	// Calculating dop
+	if(is_touched)
+	{
 
+		device_transf_hd.multMatrixDir(force, force_trans);
+		force_trans.normalize();
 
+		needle_vector = device_pos - device_contact_pos;
 
-	if(is_touched){
+		needle_PENETRATION = sqrt(needle_vector[0]*needle_vector[0] + 
+			needle_vector[1]*needle_vector[1] + 
+			needle_vector[2]*needle_vector[2]);
 
-		//Calcola la DOP
-		//! valido sse superficie orizzontale
-		needle_DOP = device_contact_pos[1] - device_pos[1]; 
+		// needle_DOP = device_contact_pos[1] - device_pos[1];
 
-		//Calcola il needle_vector
-		//! sempre calcolato rispetto alla posizione reale del tip e non a quella ideale (ideale=sulla linea constraint)
-		needle_vector = device_pos - device_contact_pos; 
+		// if (isnan(needle_DOP))
+		// 	needle_DOP = 0.0f;
 
-		//Calcola la total_needle_penetration		 
-		HDdouble total_needle_penetration;
-		total_needle_penetration = needle_vector.magnitude();
+		// if (needle_DOP <= 0.0f)
+		// {
+		// 	is_touched = false;
+		// 	needle_PENETRATION = 0;
+		// 	cout << "***************\nNow outiside\n***************" << endl;
+		// }
 
-		//Calcola il vettore needle_penetration_vector
-		//! non serve tutto sto casino basta mantenere total needle penetration e ultimo_tessuto_needle_penetration
-		HDdouble needle_penetration = 0.0f;
-
-		if(tissue_height[0] <= needle_DOP && needle_DOP < tissue_height[1])
+		if (is_touched && force[1] >= 0.0f)
 		{
-			needle_penetration=total_needle_penetration;
-		}
-		else if(tissue_height[1] <= needle_DOP && needle_DOP < tissue_height[2])
-		{
-			HDdouble needle_DOP_fat = needle_DOP - tissue_height[1];	
-			needle_penetration = (needle_DOP_fat / needle_DOP) * total_needle_penetration;
-		}
-
-		else if(tissue_height[2] <= needle_DOP && needle_DOP < tissue_height[3])
-		{
-			HDdouble needle_DOP_fat = needle_DOP - tissue_height[1];
-			HDdouble needle_DOP_muscle = needle_DOP - tissue_height[2];
-			needle_penetration = (needle_DOP_muscle / needle_DOP) * total_needle_penetration;
-		}
-
-		//Controlli sulla DOP
-		if (isnan(needle_DOP))
-		{
-			needle_DOP = -1.0f;
-		}
-
-		//ESCI DAL TESSUTO se la DOP è < 0 e la velocità è rivolta verso l'alto
-		if (needle_DOP <= 0.0f && needle_velocity_vector[1]>0)
-		{
-			is_touched = false;
-			total_needle_penetration = 0;
-			puncture[0] = 0.0f;
-			puncture[1] = 0.0f;
-			puncture[2] = 0.0f;
-		}
-
-		needle_DOP_difference = abs(old_needle_DOP - needle_DOP);
-		
-		if(needle_DOP_difference > 10)
-		{
-			needle_DOP = old_needle_DOP;
-		}
-
-		old_needle_DOP = needle_DOP;
-
-		//Calcola reaction_force_direction
-		hduVector3Dd reaction_force_direction(-needle_vector);
-		reaction_force_direction.normalize();
-
-		//Calcola la magnitude della forza di reazione 
-		HDdouble reaction_force_magnitude = 0.0f;
-
-		//In base allo strato in cui ti trovi (DOP) cambiano i coefficienti
-		int level = 0;
-		if(tissue_height[0] <= needle_DOP && needle_DOP < tissue_height[1])
-		{
-			level = 1;
-			//metti a 0 le puncture di tutti gli strati seguenti
-			puncture[1] = 0;
-			puncture[2] = 0;
-
-			//calcola la forza statica
-			reaction_force_magnitude = stiffness[0]*needle_penetration;
-
-			//se la forza statica è > FstaticaMassima, se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
-			if(puncture[0] == 1 || reaction_force_magnitude > max_reaction_force_vector[0] )
+			if (needle_DOP > 0.0f && needle_DOP < 0.1)
 			{
-				reaction_force_magnitude = damping[0] * needle_penetration * needle_velocity_magnitude;
-				puncture[0] = 1;
+				force[1] = 0.5f;
+				// force_trans = force_trans * 1.2f;
 			}
-
-			reaction_force_magnitude = 0.4;
-		}
-		else if(tissue_height[1] <= needle_DOP && needle_DOP < tissue_height[2])
-		{
-			level = 2;
-			//metti a 0 le puncture di tutti gli strati seguenti
-			puncture[2] = 0;
-
-			//calcola la forza statica
-			reaction_force_magnitude = stiffness[1]*needle_penetration + 
-			damping[0] * (tissue_height[1]-tissue_height[0]) * needle_velocity_magnitude;
-
-			//se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
-			if(puncture[1] == 1 || reaction_force_magnitude > max_reaction_force_vector[1] )
+			if (needle_DOP >= 0.1f && needle_DOP < 0.3f)
 			{
-				reaction_force_magnitude = 	(damping[0] * (tissue_height[1]-tissue_height[0]) + 
-											damping[1] * needle_penetration) * needle_velocity_magnitude;
-				puncture[1] = 1;
+				force[1] = 2.0f;
+				// force_trans = force_trans * 1.4f;
 			}
-
-			reaction_force_magnitude = 1.5;
-		}
-		else if(tissue_height[2] <= needle_DOP && needle_DOP < tissue_height[3])
-		{
-			level = 3;
-			 //calcola la forza statica
-			reaction_force_magnitude = 	stiffness[2]*needle_penetration + 
-										(damping[0] * (tissue_height[1]-tissue_height[0]) + damping[1] * (tissue_height[2]-tissue_height[1])) 
-										* needle_velocity_magnitude;
-
-			 //se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
-			if(puncture[2] == 1 || reaction_force_magnitude > max_reaction_force_vector[2])
+			if (needle_DOP >= 0.3f && needle_DOP < 0.6f)
 			{
-				reaction_force_magnitude = (damping[0] * (tissue_height[1]-tissue_height[0]) +
-											damping[1] * (tissue_height[2]-tissue_height[1]) +
-											damping[2] * needle_penetration ) * needle_velocity_magnitude;
-				puncture[2] = 1;
+				force[1] = 1.5f;
+				// force_trans = force_trans * 1.8f;
 			}
-
-			reaction_force_magnitude = 2;
-		}
-		else if(needle_DOP >= tissue_height[3])
-		{
-			level = 4;
-			//se stai toccando l'osso setta la forza statica
-			reaction_force_magnitude = 	stiffness[3] * total_needle_penetration +
-										(damping[0] * (tissue_height[1]-tissue_height[0]) +
-										damping[1] * (tissue_height[2]-tissue_height[1]) +
-										damping[2] * (tissue_height[3]-tissue_height[2]) ) * needle_velocity_magnitude;
-
-			reaction_force_magnitude = 2.5;
+			if (needle_DOP >= 0.6f)
+			{
+				force[1] = 1.0f;
+				// force_trans = force_trans * 1.3f;
+			}
 		}
 
-		// ******************************************************
-		// **************** FORZA DI REAZIONE *******************
-		// ******************************************************
-
-		//placeholder
-		//reaction_force_magnitude = 0.20f;
-		hduVector3Dd reaction_force(0.0f,0.0f,0.0f);
-		reaction_force = reaction_force_magnitude * (-desired_direction);
-
-		//Calcola forza di richiamo sulla linea
-
-/*		FORZA ELASTICA DI RICHIAMO
-		hduVector3Dd elastic_force(0.0f,0.0f,0.0f);
-		hduVector3Dd elastic_force_direction(0.0f,0.0f,0.0f);
-		HDdouble elastic_force_magnitude = 0.0f;
-		HDdouble displacement = 0.0f;
-		HDdouble projected_needle_velocity = 0.0f;
-		double elastic_force_stiffness = 0.5f;
-		double elastic_force_damping = 0.0f;
-
-		hduVector3Dd norm_desired_direction = desired_direction;
-		norm_desired_direction.normalize();
-
-		HDdouble projection_length = needle_vector.dotProduct( norm_desired_direction);
-
-		hduVector3Dd projection_vector(0.0f,0.0f,0.0f);
-		projection_vector = norm_desired_direction * projection_length;
-
-		displacement = sqrt( pow( needle_vector.magnitude(), 2.0) - pow( projection_length, 2.0));
-		elastic_force_magnitude = elastic_force_stiffness * displacement;
-
-		elastic_force_direction = (projection_vector - needle_vector);
-		elastic_force_direction.normalize();
-
-		projected_needle_velocity = needle_velocity_vector.dotProduct(elastic_force_direction);
-		
-		elastic_force = (elastic_force_magnitude - elastic_force_damping * projected_needle_velocity) * elastic_force_direction;
-
-		//Attenua la forza elastica se sei a meno di 3 mm dall'asse desiderato
-		if(displacement  < 3)
-		{
-			elastic_force = elastic_force * displacement/3;
-		}
-
-		//Rescaling and Clamping della reaction force
-		reaction_force_magnitude = reaction_force.magnitude();
-		reaction_force_direction = reaction_force;
-		reaction_force_direction.normalize();
-
-		reaction_force_magnitude = reaction_force_magnitude*2.5/30000;
-		if(reaction_force_magnitude > 2.6)
-			reaction_force_magnitude = 2.6;
-		reaction_force = reaction_force_magnitude * reaction_force_direction;
-/**/
-
-
-		// FORZA DI ATTRITO SPAZIALE
-		HDdouble damping_force_magnitude= 0.0f;
-		double damping_coeff = 0.2;
-
-		damping_force_direction = -needle_velocity_vector;
-		damping_force_direction.normalize();
-
-		damping_force_magnitude = needle_velocity_magnitude * damping_coeff;
-
-		damping_force = damping_force_magnitude * damping_force_direction;
-
-		hduVector3Dd norm_desired_direction = desired_direction;
-		norm_desired_direction.normalize();
-
-		auto projected_damping_force_magnitude = damping_force.dotProduct(norm_desired_direction);
-		auto projected_damping_force = projected_damping_force_magnitude * norm_desired_direction;
-		
-		damping_force = damping_force - projected_damping_force;
-
-
-		//Calcola forza totale
-		total_force = reaction_force*0 + damping_force/100;
-		hdSetDoublev(HD_CURRENT_FORCE, total_force*1.0);
-
-		HDdouble max_force=0.0f;
-		hdGetDoublev(HD_NOMINAL_MAX_FORCE, &max_force);
-
-		if (count == 750)
-		{	
-			//cout << "NEEDLE VELOCITY:\t" << needle_velocity_vector[1] << endl;
-			cout << "total force =          \t" << total_force.magnitude() << endl; 
-			cout << "damping force =        \t" << damping_force_magnitude << endl; 
-			cout << "livello =              \t" << level << endl;
-
-			cout << "Current Button         \t" << current_button << endl;
-
-			cout << "******************************" << endl;
-			count = 0;
-		}
-		count++;
-
+		// force.normalize();
+		hdSetDoublev(HD_CURRENT_FORCE, force*(1.5f));
 	}
+
+	//! TUTTO QUI DENTRO IL RENDERING DI FORZA
+	if (count == 750)
+	{	
+		cout << "PROXY Position @ touch is: \t" << proxy_contact_pos << endl;
+		cout << "DEVICE Position @ touch is:\t" << device_contact_pos << endl;
+		cout << "DEVICE CURRENT POS         \t" << device_pos << endl;
+
+		cout << "HD_CURRENT_FORCE:    \t" << kk << endl;
+		cout << "Tranformed force is: \t" << force_trans << endl;
+		cout << "FORCE After imposing \t" << force << endl;
+		cout << "Needle Penetration:  \t" << needle_PENETRATION << endl;
+		cout << "Depth of Penetration:\t" << needle_DOP << endl;
+		cout << "Needle vector:       \t" << needle_vector << endl;
+
+		cout << "*********************************************" << endl << endl;
+
+		count = 0;
+	}
+	count++;
 
 	// Error handler
 	HHD current_device_handler = hdGetCurrentDevice();
@@ -843,8 +572,8 @@ void glutReshape(int width, int height)
 	glLoadIdentity();
 
 	gluLookAt(	0, 0, -1.0+farDist,
-		0, 0, 0,
-		0, 1, 0);
+				0, 0, 0,
+				0, 1, 0);
 
 	updateWorkspace();
 }
@@ -875,9 +604,9 @@ void glutMenu(int ID)
 {
 	switch(ID)
 	{
-	case 0:
-		exit(0);
-		break;
+		case 0:
+			exit(0);
+			break;
 	}
 }
 
@@ -885,14 +614,14 @@ void glutMouse(int button,int state,int x,int y)
 {
 	if (state == GLUT_UP)
 		switch (button)
-	{
-		case GLUT_LEFT_BUTTON:
-			mouse_left_butt_active = false;
-			break;
-		case GLUT_MIDDLE_BUTTON:
-			mouse_mid_butt_active = false;
-			break;
-	}
+		{
+			case GLUT_LEFT_BUTTON:
+				mouse_left_butt_active = false;
+				break;
+			case GLUT_MIDDLE_BUTTON:
+				mouse_mid_butt_active = false;
+				break;
+		}
 
 	if (state == GLUT_DOWN)
 	{
@@ -901,14 +630,14 @@ void glutMouse(int button,int state,int x,int y)
 
 		switch (button)
 		{
-		case GLUT_LEFT_BUTTON:
-			mouse_left_butt_active = true;
-			cout << " ho premuto il pulsante sx" << endl;
-			break;
-		case GLUT_MIDDLE_BUTTON:
-			mouse_mid_butt_active = true;
-			cout << " ho premuto il pulsante porcodio" << endl;
-			break;
+			case GLUT_LEFT_BUTTON:
+				mouse_left_butt_active = true;
+				cout << " ho premuto il pulsante sx" << endl;
+				break;
+			case GLUT_MIDDLE_BUTTON:
+				mouse_mid_butt_active = true;
+				cout << " ho premuto il pulsante porcodio" << endl;
+				break;
 		}
 	}
 }
@@ -962,6 +691,7 @@ void drawSceneGraphics()
 		glPopMatrix();
 	}
 
+
 	//Uncomment to see the Entry Point
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LIGHTING_BIT);
 	glDisable(GL_TEXTURE_2D);
@@ -989,18 +719,12 @@ void drawCursor()
 
 	// HLdouble proxyxform[16];
 	hduMatrix proxyxform;
-	// double proxyPos[3];
-	hduVector3Dd proxyPos;
+	double proxyPos[3];
 
 	hlGetDoublev(HL_PROXY_POSITION, proxyPos);
 	GLUquadricObj *qobj = 0;
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LIGHTING_BIT);
 	glPushMatrix();
-
-	//! INTEGRATION
-	auto new_pos = proxyPos + delta_pos;
-	hlProxydv(HL_PROXY_POSITION, new_pos);
-
 
 	if (!gCursorDisplayList)
 	{
@@ -1009,25 +733,20 @@ void drawCursor()
 		qobj = gluNewQuadric();
 
 		gluCylinder(qobj, 0.0, kCursorRadius, kCursorHeight,
-			kCursorTess, kCursorTess);
+		kCursorTess, kCursorTess);
 
 		glTranslated(0.0, 0.0, kCursorHeight);
 
-		gluCylinder(qobj, kCursorRadius, 
-			0.0, kCursorHeight / 5.0,
-			kCursorTess, kCursorTess);
+		gluCylinder(qobj, kCursorRadius, 0.0, kCursorHeight / 5.0,
+		kCursorTess, kCursorTess);
 
 		gluDeleteQuadric(qobj);
 		glEndList();
 	}
 
 	// Get the proxy transform in world coordinates.
-	// If entered hole, then freeze the rotations of the needle to the one at the contact
 	hlGetDoublev(HL_PROXY_TRANSFORM, proxyxform);
-	hlGetDoublev(HL_DEVICE_TRANSFORM, current_device_transform);
-
-
-
+	//If entered hole, then freeze the rotations of the needle to the one at the contact
 	if (is_touched)
 	{
 		for (int i = 0; i < 3; i++)
@@ -1037,16 +756,12 @@ void drawCursor()
 				proxyxform(i,j) = device_transf(i,j);
 			}
 		}
-		auto y_contact_point = proxy_contact_pos[1];
-		auto y_curr = proxyxform(3,1);
-
-		proxyxform(3,0) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[0]) + proxy_contact_pos[0];
-		proxyxform(3,2) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[2]) + proxy_contact_pos[2];
 	}
 
 	//Get the depth of Penetration from HLAPI.
-	//hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
+	hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
 	glMultMatrixd(proxyxform);
+
 
 	glTranslatef(0.0,0.0,cursorToToolTranslation);
 
@@ -1056,8 +771,8 @@ void drawCursor()
 	glCallList(needle_obj_list);
 	glPopMatrix();
 	glPopAttrib();
-
 }
+
 
 void updateWorkspace()
 {
@@ -1096,14 +811,13 @@ void drawSceneHaptics()
 	//************** SHAPE 1: cube **************//
 	//! Here we have to modify those haptic params to 
 	//! model the wanted interactions (POPTHROUGH, constraints ..)
-	if (!is_touched)
-	{
-		// cout << "*************\n NON HO ANCORA TOCCATO \n *********************" << endl;
+	// if (!is_touched)
+	// {
 		hlTouchModel(HL_CONTACT);
 		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.9f);
 		hlMaterialf(HL_FRONT, HL_DAMPING, 0.0f);
-		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0.0);
-		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION,0.0);
+		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0.9);
+		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION,0.9);
 		// hlMaterialf(HL_FRONT, HL_POPTHROUGH, 0.3);
 		hlHinti(HL_SHAPE_FEEDBACK_BUFFER_VERTICES, cube_model->numvertices);
 		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER, cube_id); //! FEEDBACK or DEPTH??
@@ -1112,21 +826,23 @@ void drawSceneHaptics()
 		glCallList(cube_obj_list);
 		glPopMatrix();
 		hlEndShape();
-	}
+	// }
 
-	if (is_touched)
-	{
-		glPushMatrix();
-		/*hlTouchModel(HL_CONSTRAINT);
-		hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.9);
-		hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0.0);
-		hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0.0);*/
-		//hlTouchModelf(HL_SNAP_DISTANCE, 300);
-		hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER,line_id);
-		initLine();
-		hlEndShape();
-		glPopMatrix();
-	}
+	// if (is_touched)
+	// {
+	// 	glPushMatrix();
+	// 	hlTouchModel(HL_CONSTRAINT);
+
+	// 	hlMaterialf(HL_FRONT, HL_STIFFNESS, 0.2);
+	// 	hlMaterialf(HL_FRONT, HL_STATIC_FRICTION, 0);
+	// 	hlMaterialf(HL_FRONT, HL_DYNAMIC_FRICTION, 0);
+	// 	hlTouchModelf(HL_SNAP_DISTANCE, 30);
+	// 	hlBeginShape(HL_SHAPE_FEEDBACK_BUFFER,line_id);
+	// 	initLine();
+	// 	hlEndShape();
+	// 	glPopMatrix();
+
+	// }
 
 	// if (is_touched)
 	// {
@@ -1159,6 +875,8 @@ void drawSceneHaptics()
 	hlEndFrame();
 
 }
+
+
 
 void displayInfo()
 {
@@ -1212,6 +930,7 @@ void displayInfo()
 	glEnable(GL_LIGHTING);
 	glEnable(GL_TEXTURE_2D);
 }
+
 
 void exitHandler()
 {

@@ -96,8 +96,6 @@ hduVector3Dd damping_force(0.0f,0.0f,0.0f);
 hduVector3Dd damping_force_direction(0.0f,0.0f,0.0f);
 hduVector3Dd push_proxy_position(0.0f,0.0f,0.0f);
 
-hduVector3Dd delta_pos;
-
 
 double tissue_height[4] = {0.0f, 30.0f, 60.0f, 90.0f};
 double stiffness[4] = {331.0f, 83.0f, 497.0f, 2483.f};
@@ -188,6 +186,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data);
 
 
 
+
 // *************************************************** //
 // ********************** MAIN  ********************** //
 // *************************************************** //
@@ -262,11 +261,6 @@ void initHL()
 		cube_id,
 		HL_COLLISION_THREAD,
 		hlUntouchCubeCB, 0);
-	// // MOTION
-	// hlAddEventCallback(HL_EVENT_MOTION,
-	// 	HL_OBJECT_ANY,
-	// 	HL_COLLISION_THREAD,
-	// 	hlNeedleMotionCB,NULL);
 
 	// BUTTON1
 	hlAddEventCallback(HL_EVENT_1BUTTONUP,
@@ -295,6 +289,12 @@ void initHL()
 		HL_OBJECT_ANY,
 		HL_COLLISION_THREAD,
 		&hlPushButtonCB, NULL);
+
+	// MOTION
+	hlAddEventCallback(HL_EVENT_MOTION,
+		needle_id,
+		HL_COLLISION_THREAD,
+		hlNeedleMotionCB,0);
 }
 
 
@@ -471,7 +471,7 @@ void HLCALLBACK hlNeedleMotionCB(HLenum event,
 	HLcache *cache,
 	void *userdata)
 {
-	cout << "Motion ...." << endl;
+	// Placeholder.
 }
 
 
@@ -485,9 +485,7 @@ void HLCALLBACK hlPushButtonCB(HLenum event,
 	hlGetDoublev(HL_DEVICE_TRANSFORM, button_down_transform);
 	hlGetDoublev(HL_PROXY_POSITION, push_proxy_position);
 
-	hlDisable(HL_PROXY_RESOLUTION);
 }
-
 void HLCALLBACK hlReleaseButtonCB(HLenum event,
 	HLuint object, 
 	HLenum thread,
@@ -495,12 +493,10 @@ void HLCALLBACK hlReleaseButtonCB(HLenum event,
 	void *userdata)
 {
 	flag_release = true;
-	hlEnable(HL_PROXY_RESOLUTION);
-
 	cout << "Button " << current_button << " released!" << endl;
-	// hlDisable(HL_PROXY_RESOLUTION);
-	// hlProxydv(HL_PROXY_POSITION, push_proxy_position);
-	// hlEnable(HL_PROXY_RESOLUTION);
+	hlDisable(HL_PROXY_RESOLUTION);
+	hlProxydv(HL_PROXY_POSITION, push_proxy_position);
+	hlEnable(HL_PROXY_RESOLUTION);
 
 	// hlGetDoublev(HL_DEVICE_TRANSFORM, button_up_transform);
 	// auto button_up_transform_inverse = button_up_transform.getInverse();
@@ -508,6 +504,7 @@ void HLCALLBACK hlReleaseButtonCB(HLenum event,
 	// 						button_down_transform * 
 	// 						global_transform_matrix;
 }
+
 
 
 HDCallbackCode HDCALLBACK hdBeginCB(void *data)
@@ -544,16 +541,10 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 	//Leggi la posizione corrente del tip (dev coords)
 	hdGetDoublev(HD_CURRENT_POSITION, device_pos);
 
-	//Leggi la velocitÃ  del tip (dev coords?)
+	//Leggi la velocità del tip (dev coords?)
 	hduVector3Dd needle_velocity_vector(0.0f, 0.0f, 0.0f);
 	hdGetDoublev(HD_CURRENT_VELOCITY, needle_velocity_vector);
 	HDdouble needle_velocity_magnitude = needle_velocity_vector.magnitude();
-
-	//! INTEGRATION
-	auto delta_T = hdGetSchedulerTimeStamp();
-	delta_pos = needle_velocity_vector * delta_T;
-
-
 
 	if(is_touched){
 
@@ -596,7 +587,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 			needle_DOP = -1.0f;
 		}
 
-		//ESCI DAL TESSUTO se la DOP Ã¨ < 0 e la velocitÃ  Ã¨ rivolta verso l'alto
+		//ESCI DAL TESSUTO se la DOP è < 0 e la velocità è rivolta verso l'alto
 		if (needle_DOP <= 0.0f && needle_velocity_vector[1]>0)
 		{
 			is_touched = false;
@@ -634,7 +625,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 			//calcola la forza statica
 			reaction_force_magnitude = stiffness[0]*needle_penetration;
 
-			//se la forza statica Ã¨ > FstaticaMassima, se Ã¨ giÃ  avvenuta la puncture, sostituisci la forza statica con quella dinamica
+			//se la forza statica è > FstaticaMassima, se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
 			if(puncture[0] == 1 || reaction_force_magnitude > max_reaction_force_vector[0] )
 			{
 				reaction_force_magnitude = damping[0] * needle_penetration * needle_velocity_magnitude;
@@ -653,7 +644,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 			reaction_force_magnitude = stiffness[1]*needle_penetration + 
 			damping[0] * (tissue_height[1]-tissue_height[0]) * needle_velocity_magnitude;
 
-			//se la forza statica Ã¨ > FstaticaMassima o se Ã¨ giÃ  avvenuta la puncture, sostituisci la forza statica con quella dinamica
+			//se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
 			if(puncture[1] == 1 || reaction_force_magnitude > max_reaction_force_vector[1] )
 			{
 				reaction_force_magnitude = 	(damping[0] * (tissue_height[1]-tissue_height[0]) + 
@@ -671,7 +662,7 @@ HDCallbackCode HDCALLBACK hdEndCB(void *data)
 										(damping[0] * (tissue_height[1]-tissue_height[0]) + damping[1] * (tissue_height[2]-tissue_height[1])) 
 										* needle_velocity_magnitude;
 
-			 //se la forza statica Ã¨ > FstaticaMassima o se Ã¨ giÃ  avvenuta la puncture, sostituisci la forza statica con quella dinamica
+			 //se la forza statica è > FstaticaMassima o se è già avvenuta la puncture, sostituisci la forza statica con quella dinamica
 			if(puncture[2] == 1 || reaction_force_magnitude > max_reaction_force_vector[2])
 			{
 				reaction_force_magnitude = (damping[0] * (tissue_height[1]-tissue_height[0]) +
@@ -989,18 +980,12 @@ void drawCursor()
 
 	// HLdouble proxyxform[16];
 	hduMatrix proxyxform;
-	// double proxyPos[3];
-	hduVector3Dd proxyPos;
+	double proxyPos[3];
 
 	hlGetDoublev(HL_PROXY_POSITION, proxyPos);
 	GLUquadricObj *qobj = 0;
 	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT | GL_LIGHTING_BIT);
 	glPushMatrix();
-
-	//! INTEGRATION
-	auto new_pos = proxyPos + delta_pos;
-	hlProxydv(HL_PROXY_POSITION, new_pos);
-
 
 	if (!gCursorDisplayList)
 	{
@@ -1025,8 +1010,17 @@ void drawCursor()
 	// If entered hole, then freeze the rotations of the needle to the one at the contact
 	hlGetDoublev(HL_PROXY_TRANSFORM, proxyxform);
 	hlGetDoublev(HL_DEVICE_TRANSFORM, current_device_transform);
+/*
+	temp_transform = button_up_transform.getInverse() * current_device_transform;
+	if (jj == 25)
+	{
+		cout << endl << "temp_transform " << endl << temp_transform << endl;
+		cout << "flag_release" << flag_release << endl;
+		jj = 0;
+	}
+	jj++;
 
-
+*/
 
 	if (is_touched)
 	{
@@ -1043,10 +1037,54 @@ void drawCursor()
 		proxyxform(3,0) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[0]) + proxy_contact_pos[0];
 		proxyxform(3,2) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[2]) + proxy_contact_pos[2];
 	}
+/**/
+
+/*	
+	hlGetDoublev(HL_PROXY_TRANSFORM, proxyxform);
+	proxyxform = proxyxform * global_transform_matrix;
+	if (current_button != 3)
+	{
+		// Get the proxy transform in world coordinates.
+		// If entered hole, then freeze the rotations of the needle to the one at the contact
+		if (is_touched)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				for (int j = 0; j < 3; j++)
+				{
+					proxyxform(i,j) = device_transf(i,j);
+				}
+			}
+			auto y_contact_point = proxy_contact_pos[1];
+			auto y_curr = proxyxform(3,1);
+
+			proxyxform(3,0) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[0]) + proxy_contact_pos[0];
+			proxyxform(3,2) = ((y_curr - y_contact_point)/desired_direction[1] * desired_direction[2]) + proxy_contact_pos[2];
+		}
+	}
+	else
+	{	
+		for (int i = 0; i < 4; i++)
+		{
+			for (int j = 0; j < 4; j++)
+			{
+				proxyxform(i,j) = device_transf(i,j);
+			}
+		}
+	}
+/**/
+
+	// if (flag_release)
+	// {
+	// 	proxyxform = proxyxform * global_transform_matrix;
+	// }
+
 
 	//Get the depth of Penetration from HLAPI.
 	//hlGetDoublev(HL_DEPTH_OF_PENETRATION, &needle_DOP);
 	glMultMatrixd(proxyxform);
+
+
 
 	glTranslatef(0.0,0.0,cursorToToolTranslation);
 
@@ -1056,7 +1094,6 @@ void drawCursor()
 	glCallList(needle_obj_list);
 	glPopMatrix();
 	glPopAttrib();
-
 }
 
 void updateWorkspace()
