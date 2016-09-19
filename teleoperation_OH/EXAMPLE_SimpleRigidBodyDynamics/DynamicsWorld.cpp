@@ -162,7 +162,7 @@ void DynamicsWorld::computeForceAndTorque(double t, RigidBody *rb)
     {
         assert(rb->massInv != 0); // no mouse springs to fixed objects
 
-        hduVector3Dd xdiff = rb->x - mouseSpringPos;
+        hduVector3Dd xdiff = rb->x - mouseSpringPos; //! Cos'è?
         hduVector3Dd vdiff = rb->v; // FIXME: shouldn't we subtract the mouse velocity?
                 
         double springLength = 0;
@@ -328,7 +328,6 @@ bool DynamicsWorld::dxdt(double t, nvectord &x, nvectord &xdot, void *userData)
                 
         pThis->computeForceAndTorque(t, &rb);
         pThis->ddtStateToArray(&rb, &xdot[i * kStateSize]);
-
         i++;
     }
 
