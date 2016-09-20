@@ -1,0 +1,932 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"class",
+				"class_dir"
+			],
+			[
+				"if",
+				"ifmain	if __name__ == '__main__'"
+			],
+			[
+				"file",
+				"file_name"
+			],
+			[
+				"def",
+				"defs	Method"
+			],
+			[
+				"dist",
+				"dist_percorsa"
+			],
+			[
+				"Coo",
+				"COORDS_LATITUDE"
+			],
+			[
+				"end",
+				"end_lon"
+			],
+			[
+				"coor",
+				"COORDS_LONGITUDE"
+			],
+			[
+				"total",
+				"total_time"
+			],
+			[
+				"end_",
+				"end_lon"
+			],
+			[
+				"poke",
+				"pokemon_pb2"
+			],
+			[
+				"wal",
+				"wall1"
+			],
+			[
+				"lamp",
+				"lamp_1"
+			],
+			[
+				"bo",
+				"box"
+			],
+			[
+				"add",
+				"addVectors"
+			],
+			[
+				"box",
+				"box_array"
+			],
+			[
+				"0x",
+				"0xffffff"
+			],
+			[
+				"poin",
+				"point_light1"
+			],
+			[
+				"sphe",
+				"sphere_material"
+			],
+			[
+				"sun",
+				"sun_angle"
+			],
+			[
+				"dir",
+				"dir_light"
+			],
+			[
+				"rec",
+				"receiveShadow"
+			],
+			[
+				"ut",
+				"ImageUtils"
+			],
+			[
+				"sprit",
+				"sprite_banana"
+			],
+			[
+				"matr",
+				"material"
+			],
+			[
+				"con",
+				"console"
+			],
+			[
+				"grou",
+				"ground_material"
+			],
+			[
+				"lig",
+				"lights"
+			],
+			[
+				"lith",
+				"lights"
+			],
+			[
+				"get",
+				"getLinearVelocity"
+			],
+			[
+				"bod",
+				"body"
+			],
+			[
+				"rel",
+				"relative_velocity"
+			],
+			[
+				"coll",
+				"collided_with"
+			],
+			[
+				"on",
+				"onGround"
+			],
+			[
+				"ve",
+				"velY"
+			],
+			[
+				"camera",
+				"camera_pos"
+			],
+			[
+				"Three",
+				"THREE"
+			],
+			[
+				"ren",
+				"render"
+			],
+			[
+				"gro",
+				"ground_material"
+			],
+			[
+				"render",
+				"renderer"
+			],
+			[
+				"phy",
+				"Physics"
+			],
+			[
+				"Phi",
+				"Physics"
+			],
+			[
+				"Ob",
+				"object"
+			],
+			[
+				"co",
+				"console"
+			],
+			[
+				"fu",
+				"function"
+			],
+			[
+				"z",
+				"z"
+			],
+			[
+				"x",
+				"x"
+			],
+			[
+				"control",
+				"controls"
+			],
+			[
+				"prev",
+				"prevTime"
+			],
+			[
+				"vec",
+				"Vector3"
+			],
+			[
+				"prot",
+				"proto	Prototype"
+			],
+			[
+				"wall",
+				"walls"
+			],
+			[
+				"floo",
+				"floor_material"
+			],
+			[
+				"flo",
+				"floor_geometry"
+			],
+			[
+				"ge",
+				"geometry"
+			],
+			[
+				"Thre",
+				"THREE"
+			],
+			[
+				"midifi",
+				"midi_file"
+			],
+			[
+				"midi",
+				"midi_files"
+			],
+			[
+				"Texture_",
+				"TEXTURE_MAG_FILTER"
+			],
+			[
+				"te",
+				"texcoords"
+			],
+			[
+				"uS",
+				"uSampler"
+			],
+			[
+				"Tex",
+				"texcoords"
+			],
+			[
+				"coords",
+				"coordsBuffer"
+			],
+			[
+				"vert",
+				"vertexAttribPointer"
+			],
+			[
+				"TEXTURE_",
+				"TEXTURE_2D"
+			],
+			[
+				"Te",
+				"TEXTURE0"
+			],
+			[
+				"bind",
+				"bindTexture"
+			],
+			[
+				"TE",
+				"TEXTURE_2D"
+			],
+			[
+				"T",
+				"TEXTURE_2D"
+			],
+			[
+				"coord",
+				"coordsBuffer"
+			],
+			[
+				"Nd",
+				"NdotL2"
+			],
+			[
+				"vColo",
+				"vColorShader"
+			],
+			[
+				"vS",
+				"vSpotLightDir"
+			],
+			[
+				"spo",
+				"spotlightdirection"
+			],
+			[
+				"vsha",
+				"vshader_gouraud"
+			],
+			[
+				"push",
+				"pushMatrix"
+			],
+			[
+				"spotli",
+				"spotlightposition"
+			],
+			[
+				"vSpo",
+				"vSpotLightPos"
+			],
+			[
+				"v",
+				"vec3"
+			],
+			[
+				"us",
+				"uShininess"
+			],
+			[
+				"uspot",
+				"uSpotLightPosition"
+			],
+			[
+				"cre",
+				"createModel"
+			],
+			[
+				"create",
+				"create"
+			],
+			[
+				"spot",
+				"spotlightposition"
+			],
+			[
+				"transfo",
+				"transformMat4"
+			],
+			[
+				"vLig",
+				"vLightDir"
+			],
+			[
+				"N",
+				"NdotL2"
+			],
+			[
+				"vs",
+				"vSpotLightPos"
+			],
+			[
+				"uSpo",
+				"uSpotLightDirection"
+			],
+			[
+				"uni",
+				"uniform3fv"
+			],
+			[
+				"vLigh",
+				"vLightPos"
+			],
+			[
+				"final",
+				"finalcolor1"
+			],
+			[
+				"fina",
+				"finalcolor1"
+			],
+			[
+				"pi",
+				"PI"
+			],
+			[
+				"fianl",
+				"finalcolor2"
+			],
+			[
+				"light",
+				"lightDir"
+			],
+			[
+				"uLightPo",
+				"uSpotLightPosition"
+			],
+			[
+				"matri",
+				"pushMatrix"
+			],
+			[
+				"ulig",
+				"uLightPosition"
+			],
+			[
+				"uLi",
+				"uLightColor"
+			],
+			[
+				"finalco",
+				"finalcolor2"
+			],
+			[
+				"pop",
+				"popMatrix"
+			],
+			[
+				"current",
+				"currentColor"
+			],
+			[
+				"frame",
+				"frameNumber"
+			],
+			[
+				"mul",
+				"multiply"
+			],
+			[
+				"li",
+				"lightDirection"
+			],
+			[
+				"uLigh",
+				"uLightDirection"
+			],
+			[
+				"unifor",
+				"uniform"
+			],
+			[
+				"uniform3fv",
+				"uniform3fv"
+			],
+			[
+				"uLight",
+				"uLightPosition"
+			],
+			[
+				"uniform",
+				"uniform3fv"
+			],
+			[
+				"uk",
+				"uKs"
+			],
+			[
+				"uK",
+				"uKa"
+			],
+			[
+				"uLig",
+				"uLightDirection"
+			],
+			[
+				"unit",
+				"unitNormal"
+			],
+			[
+				"var",
+				"varying"
+			],
+			[
+				"pro",
+				"projection"
+			],
+			[
+				"model",
+				"modelview"
+			],
+			[
+				"framN",
+				"frameNumber"
+			],
+			[
+				"wil",
+				"while"
+			],
+			[
+				"t",
+				"type"
+			],
+			[
+				"c",
+				"cylinder"
+			],
+			[
+				"for",
+				"for	for (…) {…}"
+			],
+			[
+				"p",
+				"push"
+			],
+			[
+				"dra",
+				"drawChristmasTree"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 139.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/mircocolosi/Downloads/mircolosi-cnn-319944a11d51/script/download_dataset.py",
+		"/Users/mircocolosi/Downloads/mircolosi-cnn-319944a11d51/script/download_img_bb.py",
+		"/Users/mircocolosi/Downloads/mircolosi-cnn-319944a11d51/script/resort_annotations.py",
+		"/Users/mircocolosi/Downloads/mircolosi-cnn-319944a11d51/script/3_find_in_vandal.py",
+		"/Users/mircocolosi/Downloads/mircolosi-cnn-319944a11d51/script/1_project.py",
+		"/Users/mircocolosi/Downloads/mircolosi-cnn-319944a11d51/script/2_project_depth.py",
+		"/Users/mircocolosi/Documents/pgoapi/examples/pogo-optimizer/pogo-optimizer-cli.py",
+		"/Users/mircocolosi/Documents/pgoapi/pgoapi/pgoapi.py",
+		"/Users/mircocolosi/Documents/pgoapi/pokecli.py",
+		"/Users/mircocolosi/Documents/pgoapi/my_client.py",
+		"/Users/mircocolosi/Desktop/Minecraft 1.9.0 by TeamExtreme/Server/banned-players.json",
+		"/Users/mircocolosi/Desktop/Minecraft 1.9.0 by TeamExtreme/Server/server.properties",
+		"/Users/mircocolosi/Desktop/Minecraft 1.9.0 by TeamExtreme/Server/ops.json",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/dirty.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/run.py",
+		"/Users/mircocolosi/Documents/pgoapi/README.md",
+		"/Users/mircocolosi/Documents/pgoapi/config.json.example",
+		"/Users/mircocolosi/Documents/pgoapi/pgoapi/auth.py",
+		"/Users/mircocolosi/Documents/pgoapi/pgoapi/auth_google.py",
+		"/Users/mircocolosi/Documents/pgoapi/pgoapi/auth_ptc.py",
+		"/Users/mircocolosi/Documents/pgoapi/pgoapi/__init__.py",
+		"/Users/mircocolosi/Documents/pgoapi/pgoapi/exceptions.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/pokemon_pb2.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/logic.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/location.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/config.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/main.py",
+		"/Users/mircocolosi/Documents/pgoapi/setup.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/public_proto_pb2.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/v0.9/dirty.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/v0.9/main.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/v0.9/config.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/v0.9/pokemon_pb2.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API/v0.9/public.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API-master/public_proto_pb2.py",
+		"/Users/mircocolosi/Downloads/Pokemon_Go_API-master/login.py",
+		"/Users/mircocolosi/Documents/MATLAB/HW4/Ex2/my_main.m",
+		"/Users/mircocolosi/Documents/MATLAB/Robotics2/dinamicaAndrea.m",
+		"/Users/mircocolosi/Documents/MATLAB/Robotics2/compute_kin_energy.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/dinamicaAMano4joints.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/dinamicaAMano3joints.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/dinamicaAMano2joints.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/compute_kin_energy.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/DH_Matrix.m",
+		"/Users/mircocolosi/Documents/MATLAB/Robotics2/compute_cent_coriol_terms.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/compute_Bv2.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/compute_cent_coriol_terms.m",
+		"/Users/mircocolosi/Documents/MATLAB/ROBOTICS 2 FINAL/compute_B.m",
+		"/Users/mircocolosi/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/mircocolosi/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Secondo Semestre/AI2/prolog_ex/family.pl",
+		"/Users/mircocolosi/Documents/MATLAB/SLAM/SLAM_PROJ_final/SLAM_PROJ_new.m",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/src/vmath.h",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/10_scene.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/models/scene.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW2/out/tests/models/cartoon_girl/cartoon_girl.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/tests/09_sibenik.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/09_spherical.json",
+		"/Users/mircocolosi/Downloads/Ironman/Ironman.obj",
+		"/Users/mircocolosi/Downloads/Ironman/Ironman.mtl",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/06_cb_direct.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/tests/06_cb_direct.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/tests/05_materials.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/tests/03_env.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/models/cornell-box.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/models/cornell-box-edited.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/src/pathtrace.cpp",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/08_dof.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/tests/04_light.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/gen/particles.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW5/out/bin/02_area.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/07_particles_simulated02_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/09_cloth_simulated01_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/08_particles_simulated03.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/07_particles_simulated02.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/08_particles_simulated03_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/09_cloth_simulated01.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/10_cloth_simulated02_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/10_cloth_simulated02.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/11_cloth_simulated03_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/11_cloth_simulated03.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/06_particles_simulated01_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/05_swing_skinned_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/04_samba_skinned_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/03_horse_skinned_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW4/out/tests/01_monkey_keyframed01_render.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/tests/10_displacement.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/tests/run.sh",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/bin/06_bumped.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/bin/10_displacement.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/tests/run copia.sh",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/bin/04_subdivmonkey.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW3/out/tests/01_spline.json",
+		"/Users/mircocolosi/Library/Curse/Logs/CurseClient/20151028143728-2C2D.json",
+		"/Users/mircocolosi/Desktop/FP11/v_repExtFP11/makefile",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/src/raytrace.cpp",
+		"/Users/mircocolosi/Desktop/v_repExtFP11 14.14.32.cpp",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW2/out/tests/03_plane.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW2/out/tests/models/cube.json",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Primo Semestre/Interactive Graphics/Assignment1/HW_1_phong.html",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Primo Semestre/Interactive Graphics/Assignment1/HW_1_gouraud.html",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW2/out/tests/05_cartoon_girl.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/08_refr.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/07_cylinder.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/run.sh",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/04_balls.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/01_sphere.json",
+		"/Users/mircocolosi/Desktop/proj/v_repExtFP11/makefile",
+		"/Users/mircocolosi/Downloads/V-REP_PRO_EDU_V3_2_2_Mac/programming/v_repExtPluginSkeleton/makefile",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/03_plane.json",
+		"/Users/mircocolosi/Desktop/vlsub-master/vlsub.lua",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/02_quad.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/05_refl.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/06_aa.json",
+		"/Users/mircocolosi/Documents/UniRoma/2 anno/Foundation of Computer Graphics/HW1/out/tests/run.bat",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Secondo Semestre/AI2/HW3/HW_planning/Ex.3/mario/problem",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Primo Semestre/Interactive Graphics/Project/old_stuff/character_m.js",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Secondo Semestre/AI2/HW3/HW_planning/Ex.3/mario/mario",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Secondo Semestre/AI2/HW3/HW_planning/Ex.1/EX1-pddl-domain.pddl",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Secondo Semestre/AI2/HW3/HW_planning/Ex.1/EX1-pddl-problem.pddl",
+		"/Users/mircocolosi/Downloads/report2.odt",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Secondo Semestre/AI2/HW1-2/CSP/strata.pl",
+		"/Users/mircocolosi/Documents/MATLAB/matlab-midi-master/README",
+		"/Users/mircocolosi/Documents/UniRoma/1 anno/Primo Semestre/Interactive Graphics/Project/Facebook_files/AQNYAq5btOL.js",
+		"/Users/mircocolosi/Downloads/Protege-5.0.0-beta-17/run.bat",
+		"/Users/mircocolosi/Desktop/Project_1807 2/utility_scripts/cube.js",
+		"/Users/mircocolosi/Desktop/Project_1807 2/IG_project.html",
+		"/Users/mircocolosi/Desktop/Project_1807 2/utility_scripts/character_m.js"
+	],
+	"find":
+	{
+		"height": 25.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Users/mircocolosi/Documents/pgoapi",
+			"/Users/mircocolosi/Documents/pgoapi/pgoapi",
+			"/Users/mircocolosi/Downloads/Pokemon_Go_API"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"glob",
+			"signal_handler",
+			"run",
+			"parser",
+			"argument",
+			"get_player",
+			"logic",
+			"(",
+			"walk",
+			"simulate_walking",
+			"logic",
+			"vincenty",
+			"sigma",
+			"startTime",
+			"time.time",
+			"walk_random",
+			"try_item",
+			"maps_1",
+			"maps",
+			"config.pub",
+			"pub",
+			"pokemon.json",
+			"\"number\":",
+			"\"number\"",
+			"[!]",
+			"l2f",
+			"gen_stop_data",
+			"parseFrom",
+			"move_to",
+			"get_all",
+			"frame_",
+			"frame",
+			"cube.002",
+			"name",
+			"usemtl",
+			"name",
+			"usemtl",
+			"name",
+			"usemtl",
+			"name",
+			"usemtl",
+			"name",
+			"usemtl",
+			"name",
+			"paper",
+			"name",
+			"usemtl",
+			"name",
+			"\"name",
+			"\"n\":0.000000",
+			"name",
+			"Leather_Brown",
+			"name",
+			"\"ks\": [1.000000,0.000000,0.000000],",
+			"name",
+			"dss",
+			"name",
+			"ornam",
+			"name",
+			"S-po",
+			"sprintf",
+			"lig",
+			"quad",
+			"indices",
+			"count",
+			"GL_",
+			"GL_Q",
+			"GL_",
+			"perspective",
+			"projection",
+			"coordsBuffer",
+			"render",
+			"render ()",
+			"render()",
+			"render",
+			"pointer",
+			"aCoords",
+			"matrix",
+			"glUnifrom",
+			"VERTEX_SHADER",
+			"shader",
+			"rotator",
+			"modelview",
+			"normalMatrix",
+			"3",
+			"camera",
+			"banana.posi",
+			"win",
+			"banana",
+			"dir_light",
+			"dir_lig",
+			"dir_light",
+			"lamp",
+			"canMove",
+			"controls",
+			"5",
+			"banana_bool",
+			"banana_book",
+			"console.log",
+			"console",
+			"texture",
+			"time",
+			"box",
+			"cube",
+			"dir_light",
+			"dir_lig",
+			"var box",
+			"geom",
+			"rotation",
+			"banana",
+			"cast",
+			"wood",
+			"water",
+			"stone",
+			"crate",
+			"clouds",
+			"map",
+			"consol",
+			"geometry",
+			"renderer",
+			"rendere",
+			"lights_sphere",
+			"material",
+			"camera.posi",
+			"plane",
+			"jump",
+			"console",
+			"consol"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"\"n\":96.078431",
+			"\"ks\": [0.500000, 0.500000, 0.500000],",
+			"side5",
+			"side4",
+			"side3",
+			"side2",
+			"side1",
+			"BoxGeometry",
+			" "
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "SimpleRigidBodyDynamics_VS2010.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 392.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 392.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 262.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

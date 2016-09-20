@@ -46,19 +46,19 @@ public:
 
     // Constant quantities
     double                  massInv;        // 1 / mass     
-    hduMatrix       Ibody;          // body-space inertia tensor
-    hduMatrix       Ibodyinv;       // inverse of Ibody
+    hduMatrix               Ibody;          // body-space inertia tensor
+    hduMatrix               Ibodyinv;       // inverse of Ibody
 
     // State variables
-    hduVector3Dd            x;                      // x(t) position
-    hduQuaternion   q;                      // q(t) orientation
-    hduVector3Dd            P;                      // P(t) linear momentum
-    hduVector3Dd            L;                      // L(t) angular momentum
+    hduVector3Dd            x;              // x(t) position
+    hduQuaternion           q;              // q(t) orientation
+    hduVector3Dd            P;              // P(t) linear momentum
+    hduVector3Dd            L;              // L(t) angular momentum
 
     // Derived quantities (auxiliary variables)
-    hduMatrix       Iinv;           // inverse of I, the inertia tensor
-    hduMatrix       R;                      // R(t) orientation
-    hduVector3Dd            v;                      // v(t) velocity
+    hduMatrix               Iinv;           // inverse of I, the inertia tensor
+    hduMatrix               R;              // R(t) orientation
+    hduVector3Dd            v;              // v(t) velocity
     hduVector3Dd            omega;          // angular velocity
 
     // Computed quantities
