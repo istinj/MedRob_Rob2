@@ -12,11 +12,12 @@ public:
 	~World();
 
 	void init(void);
+	void initSimulation();
 
 	// For simulatoion
 	double time;
 	std::vector<RigidBody*> body_list;
 private:
 	double gravity;
-	void delete_all_bodies();
+	void deleteAllBodies();
 };

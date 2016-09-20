@@ -56,8 +56,8 @@ void initHL(void);
 void initGraphics(void);
 void setupCallbacks(void);
 void createMenus(void);
-void display_function(void);
-void initialize_world(void);
+void displayFunction(void);
+void initializeWorld(void);
 
 int main(int argc, char **argv)
 {
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	// Initialize the Geomagic
 	initHL();
 	// World
-	initialize_world();
+	initializeWorld();
 	// Graphic stuff
 	initGraphics();
 	setupCallbacks();
@@ -154,7 +154,7 @@ void setupCallbacks(void)
 	glutDisplayFunc(display_function);
 }
 
-void display_function(void) 
+void displayFunction(void) 
 {
 	// Frame haptico iniziato
 	hlBeginFrame();
@@ -167,7 +167,7 @@ void display_function(void)
 
 }
 
-void initialize_world(void)
+void initializeWorld(void)
 {
 	my_world.init();
 	//! Initializzare la simulazione.

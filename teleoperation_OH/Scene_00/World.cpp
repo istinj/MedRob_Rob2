@@ -8,7 +8,7 @@ World::World()
 
 World::~World()
 {
-	delete_all_bodies(); //placeholder
+	deleteAllBodies(); //placeholder
 }
 
 //! Carichiamo tutti i nostri rigid bodies
